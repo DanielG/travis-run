@@ -3,4 +3,4 @@
 # when the cwd is not where the Gemfile lives :/
 
 dir=$PWD
-( cd $(dirname $0) && ./travis-script.rb $dir )
+( cd $(dirname $0) && ruby ./travis-script.rb $dir )
