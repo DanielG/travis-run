@@ -1,0 +1,110 @@
+#!/bin/sh
+## Run .travis.yml build inside a schroot over ssh
+
+. $(dirname $0)/common.sh
+
+usage () {
+    echo "Usage: $0 [OPTIONS...] -- [BACKEND_ARGS]">&2
+    echo "Options:">&2
+
+    echo "\t-k, --keep">&2
+    echo "\t\tPreserve schroot after build finishes. This is useful">&2
+    echo "\t\tduring development as you will only have to install">&2
+    echo "\t\tbuild-depends once. Make sure your build server cleans stale">&2
+    echo "\t\tschroot sessions every once in a while.">&2
+    echo >&2
+
+    echo "\t-b, --backend=BACKEND">&2
+    echo "\t\tUse specified virtualization backend on the server. Currently">&2
+    echo "\t\tavalialbe backends: $(echo $BACKENDS | sed 's/ /, /g')">&2
+    echo "\t\t(defaults to: schroot)">&2
+}
+
+OPTS=$(getopt -o hkn:c:b: --long help,keep,vm-name,chroot:,backend: -n "$(basename $0)" -- "$@")
+eval set -- "$OPTS"
+
+while true; do
+    case "$1" in
+	-h|--help)    usage; exit; ;;
+        -k|--keep)    OPT_KEEP=1; shift ;;
+        -n|--vm-name) OPT_VM_NAME=$2; shift; shift ;;
+        -b|--backend) OPT_BACKEND=$2; shift; shift ;;
+
+        --) shift; break ;;
+        *) echo "Error parsing argument: $1">&2; exit 1 ;;
+    esac
+done
+
+BACKEND_ARGS="$@"
+
+# OPT_KEEP unset by default
+OPT_VM_NAME=${OPT_VM_NAME:-travis-run-amd64}
+OPT_BACKEND=${OPT_BACKEND:-schroot}
+
+if [ ! -e .travis.yml ]; then
+    echo "Error: .travis.yml does not exist.">&2
+    exit 1
+fi
+
+if [ ! $OPT_KEEP ]; then
+    trap "backend_end $OPT_VM_NAME" 0 2 15
+fi
+
+backend_init "$OPT_VM_NAME"
+
+if [ $? -ne 0 ]; then
+    echo "Starting VM failed">&2
+    exit 1
+fi
+
+RUN="backend_run $OPT_VM_NAME copy $@"
+RUN_nocopy="backend_run $OPT_VM_NAME nocopy $@"
+
+run_tests () {
+    (
+	echo "set -e"
+	echo 'export '"$@"
+	travis run announce setup before_install install before_script script after_result after_script -p
+	echo 'RV=$?'
+	echo 'if [ $RV -ne 0 ]; then
+           env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
+           exit $RV
+        fi'
+    ) | $RUN -- sh -x
+
+    if [ $? -ne 0 ]; then
+	echo "Build failed, please investigate." >&2
+	if [ x"$OPT_BACKEND" = x"vagrant" ]; then
+	    $RUN_nocopy
+	else
+	    $RUN_nocopy -- bash
+	fi
+    fi
+}
+
+
+run_tests "GHCVER=7.8.2"
+
+# env=$(cat .travis.yml \
+#     | sed -n '/^env:/,/^[^ -]/p' \
+#     | sed -n 's/^[[:space:]]*-[[:space:]]*//p')
+
+# env_vars=$(printf '%s' "$env" | sed 's/=.*//' | uniq)
+
+# for v in $env_vars; do
+#     echo For $v:
+#     printf '%s' "$env" | sed "s/$v//"
+#     echo
+# done
+
+
+# # TODO: get --exclude's from .gitignore
+# rsync -e "$(which ssh) $SSH_OPTS" -lEr --chmod=775 \
+#     --rsync-path="sudo -u travis rsync" \
+#     --exclude='/.cabal-sandbox/*' \
+#     --exclude='/cabal.sandbox.config' \
+#     --exclude='dist/*' \
+#     --exclude='.git/*' \
+#     --delete \
+#     --delete-excluded \
+#     ./ "$server:/home/travis/$(strip_home $PWD)"

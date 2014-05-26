@@ -1,0 +1,132 @@
+#!/bin/sh
+
+schroot_create () {
+    set -e
+
+    local OPTS VM_NAME DISTRIBUTION OPT_SUITE OPT_MIRROR OPT_COMPONENTS
+
+    if [ x"$(id -u)" != x"0" ]; then
+	echo "Error: schroot_create needs to be run as root, sorry :(">&2
+	exit 1
+    fi
+
+    OPTS=$(getopt -o "" --long schroot-suite:,schroot-mirror:,schroot-components: -n "$(basename $0)" -- "$@")
+    eval set -- "$OPTS"
+
+    while true; do
+	case "$1" in
+            --schroot-suite)      OPT_SUITE=$2;      shift; shift ;;
+            --schroot-mirror)     OPT_MIRROR=$2;     shift; shift ;;
+            --schroot-components) OPT_COMPONENTS=$2; shift; shift ;;
+
+            --) shift; break ;;
+            *) echo "Error parsing argument: $1">&2; exit 1 ;;
+	esac
+    done
+
+    VM_NAME=$1; shift
+
+    OPT_SUITE=${OPT_SUITE:-precise}
+    OPT_MIRROR=${OPT_MIRROR:-http://ubuntu.mirror.lrz.de/ubuntu/}
+    OPT_COMPONENTS=${OPT_COMPONENTS:-main,universe}
+
+    if [ ! -e /etc/schroot/chroot.d/$VM_NAME ]; then
+	cat > /etc/schroot/chroot.d/$VM_NAME <<EOF
+[$VM_NAME]
+description=travis-run container
+profile=sbuild
+type=directory
+union-type=aufs
+command-prefix=eatmydata
+directory=/var/lib/schroot/chroots/$VM_NAME
+groups=travis-run
+root-groups=root
+personality=linux
+EOF
+    fi
+
+    if [ ! -d /var/lib/schroot/chroots/$VM_NAME ]; then
+	debootstrap \
+	    --include=eatmydata \
+	    --components=$OPT_COMPONENTS \
+	    $DISTRIBUTION \
+	    /var/lib/schroot/chroots/$VM_NAME \
+	    "$OPT_MIRROR"
+	if [ $? -ne 0 ]; then
+	    rm /etc/schroot/chroot.d/$VM_NAME
+	    rm -rf /var/lib/schroot/chroots/$VM_NAME
+	fi
+    fi
+
+    schroot -c $VM_NAME -- sh -x -s $USER < $(dirname $0)/../prepare-vm.sh
+}
+
+schroot_init () {
+    local VM_NAME SOURCE
+
+    VM_NAME=$1; shift
+    SOURCE=$1;  shift
+
+    if [ x"$SOURCE" = x"source" ]; then
+	VM_NAME="source:$VM_NAME"
+    fi
+
+    if [ ! $SCHROOT_SESSION_ID ]; then
+	SCHROOT_SESSION_ID=$(schroot -c $VM_NAME  -b)
+    fi
+
+    return 0
+}
+
+schroot_end () {
+    local VM_NAME
+    VM_NAME=$1; shift
+
+    if [ $SCHROOT_SESSION_ID ]; then
+	schroot -c "session:$SCHROOT_SESSION_ID" -e
+	SCHROOT_SESSION_ID=""
+    fi
+
+    return 0
+}
+
+## Usage: schroot_run VM_NAME COPY? -- COMMAND
+schroot_run () {
+    set -e
+
+    local OPTS VM_NAME USER CPY DIR
+
+    OPTS=$(getopt -o "" --long schroot-user: -n "$(basename $0)" -- "$@")
+    eval set -- "$OPTS"
+
+    while true; do
+	case "$1" in
+	    --schroot-user) OPT_USER=$2; shift; shift ;;
+            --) shift; break ;;
+            *) echo "Error parsing argument: $1">&2; exit 1 ;;
+	esac
+    done
+
+    if [ ! "$OPT_USER" ]; then
+	echo "Error: USER not given.">&2
+	exit 1
+    fi
+
+    VM_NAME=$1; shift
+    CPY=$1; shift
+
+    if [ x"$OPT_USER" = x"root" ]; then
+	DIR="/root/$(strip_home $PWD)"
+    else
+	DIR="/home/$OPT_USER/$(strip_home $PWD)"
+    fi
+
+    local SCHROOT
+    SCHROOT="schroot -c "session:$SCHROOT_SESSION_ID" -u $OPT_USER -r"
+    $SCHROOT -d / -- mkdir -p "$DIR/$(strip_home $PWD)"
+    if [ x"$CPY" = x"copy" ]; then
+	tar -c . | $SCHROOT -d / -- tar -x -C "$DIR/"
+    fi
+
+    $SCHROOT -d $DIR -- "$@"
+}

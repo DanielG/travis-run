@@ -1,0 +1,50 @@
+#!/bin/sh
+## Create travis build VM on the current machine
+
+set -e
+
+. $(dirname $0)/common.sh
+
+usage () {
+    echo "Usage: $0 [OPTIONS...] [--user=USER | -u USER] -- [BACKEND_ARGS]">&2
+    echo "Options:">&2
+    echo "\t-n, --vm-name=VM_NAME">&2
+    echo "\t\t(default: travis-run-ARCH)">&2
+
+    echo "\t-u, --user=USER">&2
+    echo "\t\tSet the name of the user inside VM. Currently only used by the ">&2
+    echo "\t\t`schroot` backend and ignored by all others.">&2
+
+#    echo "\t-d, --distribution=DISTRIBUTION">&2
+#    echo "\t\t(default: precise)">&2
+#    echo >&2
+
+    echo "\t-b, --backend=BACKEND">&2
+    echo "\t\tUse specified virtualization backend on the server. Currently">&2
+    echo "\t\tavalialbe backends: $(echo $BACKENDS | sed 's/ /, /g')">&2
+    echo "\t\t(default: schroot)">&2
+}
+
+
+OPTS=$(getopt -o h,n:,b: --long help,vm-name:,backend: -n "$(basename $0)" -- "$@")
+eval set -- "$OPTS"
+
+while true; do
+    case "$1" in
+	-h|--help)         usage; exit; ;;
+        -n|--vm-name)      OPT_VM_NAME=$2;      shift; shift ;;
+#       -d|--distribution) OPT_DISTRIBUTION=$1; shift; shift ;;
+        -b|--backend)      OPT_BACKEND=$2;      shift; shift ;;
+
+        --) shift; break ;;
+        *) echo "Error parsing argument: $1">&2; exit 1 ;;
+    esac
+done
+
+ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
+OPT_BACKEND=${OPT_BACKEND:-schroot}
+OPT_VM_NAME=${OPT_VM_NAME:-travis-run-$ARCH}
+
+BACKEND_ARGS="$@"
+
+backend_create $OPT_VM_NAME

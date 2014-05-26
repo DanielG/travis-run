@@ -1,0 +1,6 @@
+#!/bin/sh
+# Wrapper script for travis-script.rb becuase for some reason bundler blows up
+# when the cwd is not where the Gemfile lives :/
+
+dir=$PWD
+( cd $(dirname $0) && ./travis-script.rb $dir )
