@@ -3,6 +3,12 @@ travis-run
 
 Run *travis-ci* build locally with *schroot* or *Vagrant*+*Docker*.
 
+Installation
+============
+
+For now you should just clone https://github.com/DanielG/travis-run.git, run
+`bundle install` in there and add the directory it to your *PATH*.
+
 Usage
 =====
 
