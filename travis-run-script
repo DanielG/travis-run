@@ -18,4 +18,9 @@
 # when the cwd is not where the Gemfile lives :/
 
 dir=$PWD
-( cd $(dirname $0) && ruby ./travis-script.rb $dir )
+if [ -e $(dirname $0)/Gemfile ]; then
+    cd $(dirname $0)
+else
+    cd /usr/share/travis-run
+fi
+ruby ./travis-run-script.rb $dir $@

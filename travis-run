@@ -77,41 +77,36 @@ RUN_nocopy="backend_run $OPT_VM_NAME nocopy $@"
 
 run_tests () {
     (
-	echo "set -e"
-	echo 'export '"$@"
-	travis run announce setup before_install install before_script script after_result after_script -p
-	echo 'RV=$?'
-	echo 'if [ $RV -ne 0 ]; then
-           env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
-           exit $RV
-        fi'
-    ) | $RUN -- sh -x
+	# echo 'travis_run_onexit () {'
+	# echo 'RV=$?'
+	# echo 'if [ $RV -ne 0 ]; then
+        #    env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
+        #    exit $RV
+        # fi'
+	# echo '}'
+	# echo 'trap "travis_run_onexit" 0 2 15'
+
+	echo "cd build"
+	printf "%s\n" "$1" | $(dirname $0)/travis-run-script --build
+    ) | $RUN -- bash # travis-build seems to assume bash :/
 
     if [ $? -ne 0 ]; then
-	echo "Build failed, please investigate." >&2
-	if [ x"$OPT_BACKEND" = x"vagrant" ]; then
-	    $RUN_nocopy
-	else
-	    $RUN_nocopy -- bash
-	fi
+    	echo "Build failed, please investigate." >&2
+    	if [ x"$OPT_BACKEND" = x"vagrant" ]; then
+    	    $RUN_nocopy
+    	else
+    	    $RUN_nocopy -- bash
+    	    exit
+    	fi
     fi
 }
 
-
-run_tests "GHCVER=7.8.2"
-
-# env=$(cat .travis.yml \
-#     | sed -n '/^env:/,/^[^ -]/p' \
-#     | sed -n 's/^[[:space:]]*-[[:space:]]*//p')
-
-# env_vars=$(printf '%s' "$env" | sed 's/=.*//' | uniq)
-
-# for v in $env_vars; do
-#     echo For $v:
-#     printf '%s' "$env" | sed "s/$v//"
-#     echo
-# done
-
+cfgs=$($(dirname $0)/travis-run-script)
+BIFS=$IFS; IFS="\n"
+for cfg in "$cfgs"; do
+    IFS=$BIFS run_tests "$cfg"
+done
+IFS=$BIFS
 
 # # TODO: get --exclude's from .gitignore
 # rsync -e "$(which ssh) $SSH_OPTS" -lEr --chmod=775 \

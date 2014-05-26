@@ -1,7 +1,8 @@
 source 'https://rubygems.org'
 
-gem 'addressable'
-gem 'travis-support',  github: 'travis-ci/travis-support'
-gem 'activesupport', '~> 3.2'
-
 gem 'travis-build',     git: 'https://github.com/travis-ci/travis-build'
+gem 'travis-core',      git: 'https://github.com/travis-ci/travis-core'
+gem 'travis-support',   git: 'https://github.com/travis-ci/travis-support'
+gem 'travis-sidekiqs',  git: 'https://github.com/travis-ci/travis-sidekiqs'
+gem 'factory_girl'
+gem 'connection_pool'
