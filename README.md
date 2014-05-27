@@ -14,8 +14,12 @@ Usage
 
 - Create a virtual machine: `travis-run create`
 
+  You should run this in your project directory.
+
   With the `vagrant` backend this involves doing a `docker build` inside the
-  Host VM or on the system running `travis-run-create` (with Linux).
+  Host VM or on the system running `travis-run-create` (with Linux). It will
+  also create a directory `.travis-run/` that will contain the *Vagrantfile* and
+  *Dockerfile* which you may modify and commit to version control.
 
 - Run your builds locally: `travis-run`
 
