@@ -34,6 +34,14 @@ tail () {
 ################################################################################
 # Backend stuff
 
+backend_register_longopt () {
+    if [ "$BACKEND_GETOPT_LONG" ]; then
+	BACKEND_GETOPT_LONG="${BACKEND_GETOPT_LONG},$1"
+    else
+	BACKEND_GETOPT_LONG="$1"
+    fi
+}
+
 BACKENDS=""
 for b in $(dirname $0)/backends/*; do
     name=$(basename -s .sh $b)

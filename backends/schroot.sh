@@ -1,5 +1,10 @@
 #!/bin/sh
 
+backend_register_longopt "schroot-user:"
+backend_register_longopt "schroot-suite:"
+backend_register_longopt "schroot-mirror:"
+backend_register_longopt "schroot-components:"
+
 schroot_create () {
     set -e
 
