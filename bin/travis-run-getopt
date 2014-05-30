@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+# Copyright (C) 2014  Daniel Gröber <dxld ÄT darkboxed DOT org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## GNU getopt(1) replacement for silly BSDisch platforms
+
+require 'getoptlong'
+
+opts = GetoptLong.new(
+     ["--long", GetoptLong::REQUIRED_ARGUMENT ],
+     ["-o",     GetoptLong::REQUIRED_ARGUMENT ],
+     ["-n",     GetoptLong::REQUIRED_ARGUMENT ])
+
+argopts = []
+nargopts = []
+options = []
+progname = ""
+
+opts.each do |opt,arg|
+  case opt
+  when "--long"
+    arg.split(",").each do |optspec|
+      if optspec.end_with? ":" then
+        argopts << optspec[0..-2]
+        options << ["--" + optspec[0..-2], GetoptLong::REQUIRED_ARGUMENT]
+      else
+        nargopts << optspec
+        options << ["--" + optspec, GetoptLong::NO_ARGUMENT]
+      end
+    end
+  when "-o"
+    optspec = arg
+
+    arg_opts = optspec.scan /.:/
+
+    noarg_opts_ = arg_opts.inject(optspec) do |acc, a|
+      acc.sub a, ""
+    end
+
+    noarg_opts = noarg_opts_.split ""
+
+    arg_opts.each do |opt|
+      argopts << opt[0]
+      options << ["-" + opt[0], GetoptLong::REQUIRED_ARGUMENT]
+    end
+
+    noarg_opts.each do |opt|
+      argopts << opt
+      options << ["-" + opt, GetoptLong::NO_ARGUMENT]
+    end
+  when "-n"
+    progname.replace arg
+  else
+    $stderr.puts "travis-run-getopt: unrecognized option '"+ opt +"'"
+  end
+end
+
+args = []
+extopts = GetoptLong.new(*options)
+extopts.each do |opt,arg|
+  args << opt
+  if argopts.include? opt then
+    args << "'" + arg +"'"
+  end
+end
+
+args << "--"
+args += ARGV.map do |a|
+  "'" + a + "'"
+end
+
+puts args.join " "
