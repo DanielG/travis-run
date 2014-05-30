@@ -26,49 +26,8 @@ require 'travis'
 require 'travis/build'
 require 'travis/model/build/config'
 require 'travis/testing/factories'
-require 'factory_girl/factory'
 require 'yaml'
 require 'active_support/core_ext/hash'
-
-#### From rails >= 4.0, activesupport/lib/active_support/core_ext/hash/keys.rb
-# Copyright (c) 2005-2013 David Heinemeier Hansson
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-class Hash
-  # Destructively convert all keys to strings.
-  # This includes the keys from the root hash and from all
-  # nested hashes.
-  def deep_stringify_keys!
-    deep_transform_keys!{ |key| key.to_s }
-  end
-
-  # Destructively convert all keys to symbols, as long as they respond
-  # to +to_sym+. This includes the keys from the root hash and from all
-  # nested hashes.
-  def deep_symbolize_keys!
-    deep_transform_keys!{ |key| key.to_sym rescue key }
-  end
-
-  # Destructively convert all keys by using the block operation.
-  # This includes the keys from the root hash and from all
-  # nested hashes.
-  def deep_transform_keys!(&block)
-    keys.each do |key|
-      value = delete(key)
-      self[yield(key)] = value.is_a?(Hash) ? value.deep_transform_keys!(&block) : value
-    end
-    self
-  end
-end
 
 def configs dir
   config = travis_config(dir)

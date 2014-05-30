@@ -54,7 +54,6 @@ usage () {
     echo "\t\trunning the build before and after the build so make sure your"
     echo "\t\t.travis.yml contains a \`clean' action before attempting the"
     echo "\t\tbuild."
-    echo
     echo "\t\tBackend Options for \`schroot':"
     echo "\t\t\t--schrot-user=USER"
     echo "\t\t\t\tName of the user to run commands inside the"
@@ -91,8 +90,11 @@ usage () {
     echo
 }
 
-TRAVIS_GETOPT_LONG="help,keep,vm-name,chroot:,backend:"
-TRAVIS_GETOPT_SHORT="hkn:c:b:"
+usage
+exit
+
+TRAVIS_GETOPT_LONG="help,keep,vm-name,backend:"
+TRAVIS_GETOPT_SHORT="hkn:b:"
 
 if [ "$BACKEND_GETOPT_LONG" ]; then
     LONGOPTS="$TRAVIS_GETOPT_LONG,$BACKEND_GETOPT_LONG"
@@ -100,11 +102,10 @@ else
     LONGOPTS="$TRAVIS_GETOPT_LONG"
 fi
 
-OPTS=$(getopt \
+OPTS=$($GETOPT \
     -o "$TRAVIS_GETOPT_SHORT" \
     --long "$LONGOPTS" \
     -n "$(basename $0)" -- "$@")
-
 eval set -- "$OPTS"
 
 BACKEND_ARGS=""
@@ -116,7 +117,7 @@ while true; do
         -n|--vm-name) OPT_VM_NAME=$2; shift; shift ;;
         -b|--backend) OPT_BACKEND=$2; shift; shift ;;
 
-	--schroot-*|--vagrant-*)
+	--schroot-*|--vagrant-*|--docker-*)
 	    BACKEND_ARGS="$BACKEND_ARGS $1 $2"; shift; shift ;;
 
         --) shift; break ;;
@@ -128,7 +129,7 @@ done
 
 # OPT_KEEP unset by default
 OPT_VM_NAME=${OPT_VM_NAME:-travis-run-amd64}
-OPT_BACKEND=${OPT_BACKEND:-vagrant}
+OPT_BACKEND=${OPT_BACKEND:-docker}
 
 ## Commands
 

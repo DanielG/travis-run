@@ -15,6 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+SHARE_DIR=$(dirname $0)
+BIN_DIR=$(dirname $0)/bin
+
+GETOPT=getopt
+
 ################################################################################
 # Utilities
 
@@ -43,7 +48,7 @@ backend_register_longopt () {
 }
 
 BACKENDS=""
-for b in $(dirname $0)/backends/*; do
+for b in $(dirname $0)/backends/*.sh; do
     name=$(basename -s .sh $b)
     BACKENDS="${BACKENDS} $name"
     . $b
@@ -75,9 +80,7 @@ backend_end () {
 ##
 # Create a new VM image and configuration
 #
-# MUST run prepare-vm.sh inside the vm after creating the vm
-#
-# Usage: backend_create VM_NAME
+# Usage: backend_create VM_NAME LANGUAGE
 backend_create () {
     ${OPT_BACKEND}_create "$@" "$BACKEND_ARGS"
 }

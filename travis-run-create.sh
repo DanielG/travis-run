@@ -23,4 +23,26 @@ if [ ! -e .travis.yml ]; then
     exit 1
 fi
 
-backend_create $OPT_VM_NAME
+LANGUAGE=""
+
+perl -e 'use YAML;' >/dev/null 2>&1
+PERL_YAML=$?
+
+ruby -e 'require "bla"' >/dev/null 2>&1
+RUBY_YAML=$?
+
+if [ $PERL_YAML -ne 0 ] && [ $RUBY_YAML -ne 0 ]; then
+    echo "You need to have perl's YAML module or ruby's 'yaml' gem installed.">&2
+elif [ $PERL_YAML -eq 0 ]
+    LANGUAGE=$(perl -e 'use YAML; print Load(<STDIN>)->{"language"};' < .travis.yml)
+else
+    LANGUAGE=$(ruby -e 'require "yaml"; puts YAML.load_file(".travis.yml")["language"]')
+fi
+
+if [ ! $LANGUAGE ]; then
+    echo "Could not detect language, please add a \`language:' declaration">&2
+    echo "to your \`.travis.yml'."
+    exit 1
+fi
+
+backend_create $OPT_VM_NAME $LANGUAGE
