@@ -47,16 +47,16 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
 
 	mkdir -p ~/.travis-run/${VM_NAME}_base
-	cd ~/.travis-run/${VM_NAME}_base
-	cp $SHARE_DIR/vm/base-install.sh .
-	cp $SHARE_DIR/vm/base-configure.sh .
-	cp $SHARE_DIR/vm/language-install.sh .
-	cp $SHARE_DIR/keys/travis-run.pub .
+	cp $SHARE_DIR/vm/base-install.sh     ~/.travis-run/${VM_NAME}_base
+	cp $SHARE_DIR/vm/base-configure.sh   ~/.travis-run/${VM_NAME}_base
+	cp $SHARE_DIR/vm/language-install.sh ~/.travis-run/${VM_NAME}_base
+	cp $SHARE_DIR/keys/travis-run.pub    ~/.travis-run/${VM_NAME}_base
 
 	sed 's/$OPT_FROM/'"$OPT_FROM"'/' \
-	    < $SHARE_DIR/docker/Dockerfile.base > Dockerfile
+	    < $SHARE_DIR/docker/Dockerfile.base \
+	    > ~/.travis-run/${VM_NAME}_base/Dockerfile
 
-	docker build --rm=false -t ${VM_NAME}_base .
+	docker build --rm=false -t ${VM_NAME}_base ~/.travis-run/${VM_NAME}_base
     )
 
     echo "Creating build-script image"
@@ -64,13 +64,13 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && exit
 
 	mkdir -p ~/.travis-run/${VM_NAME}_script
-	cd ~/.travis-run/${VM_NAME}_script
-	cp -a $SHARE_DIR/script .
+	cp -a $SHARE_DIR/script ~/.travis-run/${VM_NAME}_script
 
 	sed 's/$FROM/'"${VM_NAME}_base"'/' \
-	    < $SHARE_DIR/docker/Dockerfile.script > Dockerfile
+	    < $SHARE_DIR/docker/Dockerfile.script \
+	    > ~/.travis-run/${VM_NAME}_script/Dockerfile
 
-	docker build -t ${VM_NAME}_script .
+	docker build -t ${VM_NAME}_script ~/.travis-run/${VM_NAME}_script
     )
 
     echo "Creating language image"
@@ -78,13 +78,15 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && exit
 
 	mkdir -p ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE
-	cd ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE
 
 	sed 's/$FROM/'"${VM_NAME}_base"'/' \
-	    < $SHARE_DIR/docker/Dockerfile.language > Dockerfile
-	sed -i 's/$OPT_LANGUAGE/'"$OPT_LANGUAGE"'/' Dockerfile
+	    < $SHARE_DIR/docker/Dockerfile.language \
+	    > ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE/Dockerfile
+	sed -i 's/$OPT_LANGUAGE/'"$OPT_LANGUAGE"'/' \
+	    ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE/Dockerfile
 
-	docker build -t ${VM_NAME}_$OPT_LANGUAGE .
+	docker build -t ${VM_NAME}_$OPT_LANGUAGE \
+	    ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE
     )
 
     echo "Creating per-project image"
@@ -92,18 +94,18 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "project" ] && exit
 
 	mkdir -p .travis-run/$VM_NAME
-	cd .travis-run/$VM_NAME
 
-	if [ ! -e Dockerfile ]; then
+	if [ ! -e .travis-run/$VM_NAME/Dockerfile ]; then
 	    sed 's/$FROM/'"${VM_NAME}_$OPT_LANGUAGE"'/' \
-		< $SHARE_DIR/docker/Dockerfile.project > Dockerfile
+		< $SHARE_DIR/docker/Dockerfile.project \
+		> .travis-run/$VM_NAME/Dockerfile
 	fi
 
-	DOCKER_ID=$(docker build . 2>/dev/null \
+	DOCKER_ID=$(docker build .travis-run/$VM_NAME 2>/dev/null \
 	    | grep 'Successfully built' \
 	    | awk '{ print $3 }')
 
-	echo $DOCKER_ID > docker-image-id
+	echo $DOCKER_ID > .travis-run/$VM_NAME/docker-image-id
     )
 }
 
