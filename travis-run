@@ -81,6 +81,7 @@ usage () {
     echo "\t\t\t\tDocker image to use as the base for the"
     echo "\t\t\t\tcontainer, see \`FROM' Dockerfile command."
     echo "\t\t\t\t(defaults to: ubuntu:presice)"
+    echo "TODO: docker-build-stage"
     echo
     echo
 
@@ -89,9 +90,6 @@ usage () {
     echo "\t\tkept in the project directory."
     echo
 }
-
-usage
-exit
 
 TRAVIS_GETOPT_LONG="help,keep,vm-name,backend:"
 TRAVIS_GETOPT_SHORT="hkn:b:"
@@ -118,7 +116,13 @@ while true; do
         -b|--backend) OPT_BACKEND=$2; shift; shift ;;
 
 	--schroot-*|--vagrant-*|--docker-*)
-	    BACKEND_ARGS="$BACKEND_ARGS $1 $2"; shift; shift ;;
+	    if [ ! "$BACKEND_ARGS" ]; then
+		BACKEND_ARGS="$1=$2";
+	    else
+		BACKEND_ARGS="${BACKEND_ARGS} $1 $2";
+	    fi
+	    shift; shift
+	    ;;
 
         --) shift; break ;;
         *) echo "Error parsing argument: $1">&2; exit 1 ;;

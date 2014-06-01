@@ -7,7 +7,7 @@ if [ ! -e .travis.yml ]; then
 fi
 
 if [ ! $OPT_KEEP ]; then
-    trap "backend_end $OPT_VM_NAME" 2 15
+    trap "backend_end $OPT_VM_NAME" 0 2 15
 fi
 
 backend_init "$OPT_VM_NAME"
@@ -17,11 +17,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-RUN="backend_run $OPT_VM_NAME copy $@"
-RUN_nocopy="backend_run $OPT_VM_NAME nocopy $@"
-
 run_tests () {
-    (
 	# echo 'travis_run_onexit () {'
 	# echo 'RV=$?'
 	# echo 'if [ $RV -ne 0 ]; then
@@ -31,32 +27,33 @@ run_tests () {
 	# echo '}'
 	# echo 'trap "travis_run_onexit" 0 2 15'
 
-	echo "cd build"
-	printf "%s\n" "$1" | $(dirname $0)/travis-run-script --build
-    ) | $RUN -- bash # travis-build seems to assume bash :/
+    printf "%s\n" "$1" \
+	| backend_run_script $OPT_VM_NAME --build \
+	| backend_run $OPT_VM_NAME copy -- bash
 
     if [ $? -ne 0 ]; then
     	echo "Build failed, please investigate." >&2
-    	if [ x"$OPT_BACKEND" = x"vagrant" ]; then
-    	    $RUN_nocopy
-    	else
-    	    $RUN_nocopy -- bash
-
-	    if [ ! $OPT_KEEP ]; then
-		backend_end $OPT_VM_NAME
-	    fi
-
-    	    exit
-    	fi
+	backend_run $OPT_VM_NAME nocopy
     fi
 }
 
-cfgs=$($(dirname $0)/travis-run-script)
-BIFS=$IFS; IFS="\n"
-for cfg in "$cfgs"; do
+cfgs=$(backend_run_script $OPT_VM_NAME < .travis.yml)
+
+BIFS="$IFS"
+IFS=$(echo); for cfg in $(printf "%s\n" "$cfgs"); do
     IFS=$BIFS run_tests "$cfg"
+    exit
 done
-IFS=$BIFS
+
+
+#  | while read cfg; do
+#
+#     echo
+#     echo
+
+# #
+#     exit
+# done
 
 # # TODO: get --exclude's from .gitignore
 # rsync -e "$(which ssh) $SSH_OPTS" -lEr --chmod=775 \
@@ -68,8 +65,3 @@ IFS=$BIFS
 #     --delete \
 #     --delete-excluded \
 #     ./ "$server:/home/travis/$(strip_home $PWD)"
-
-
-if [ ! $OPT_KEEP ]; then
-    backend_end $OPT_VM_NAME
-fi

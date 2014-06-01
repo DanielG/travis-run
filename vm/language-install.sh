@@ -16,8 +16,6 @@
 
 LANGUAGE=$1; shift
 
-echo '{ "travis_build_environment": { "user": "'$USER_'", "group": "'$USER_'", "home": "/home/'$USER_'/" }' > travis.json
-
 case "$LANGUAGE" in
     haskell) RUNLIST="-o haskell -o haskell::multi" ;;
     *)

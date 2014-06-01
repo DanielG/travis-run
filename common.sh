@@ -18,7 +18,7 @@
 SHARE_DIR=$(dirname $0)
 BIN_DIR=$(dirname $0)/bin
 
-GETOPT=getopt
+GETOPT=$BIN_DIR/travis-run-getopt
 
 ################################################################################
 # Utilities
@@ -83,6 +83,14 @@ backend_end () {
 # Usage: backend_create VM_NAME LANGUAGE
 backend_create () {
     ${OPT_BACKEND}_create "$@" "$BACKEND_ARGS"
+}
+
+##
+# Run travis-run-script in virtualized environment
+#
+## Usage: backend_run VM_NAME [OPTIONS..]
+backend_run_script () {
+    ${OPT_BACKEND}_run_script "$@"
 }
 
 ##

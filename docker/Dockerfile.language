@@ -7,4 +7,4 @@ WORKDIR /root
 CMD /usr/sbin/sshd -D
 EXPOSE 22
 
-RUN sh -x /root/prepare-travis-language-image.sh $OPT_LANGUAGE
+RUN sh -x /root/language-install.sh $OPT_LANGUAGE

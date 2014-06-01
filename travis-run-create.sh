@@ -33,8 +33,8 @@ RUBY_YAML=$?
 
 if [ $PERL_YAML -ne 0 ] && [ $RUBY_YAML -ne 0 ]; then
     echo "You need to have perl's YAML module or ruby's 'yaml' gem installed.">&2
-elif [ $PERL_YAML -eq 0 ]
-    LANGUAGE=$(perl -e 'use YAML; print Load(<STDIN>)->{"language"};' < .travis.yml)
+elif [ $PERL_YAML -eq 0 ]; then
+    LANGUAGE=$(perl -e 'use YAML (LoadFile); print LoadFile(".travis.yml")->{"language"};')
 else
     LANGUAGE=$(ruby -e 'require "yaml"; puts YAML.load_file(".travis.yml")["language"]')
 fi

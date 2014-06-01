@@ -7,8 +7,11 @@ WORKDIR /root
 CMD /usr/sbin/sshd -D
 EXPOSE 22
 
-ADD prepare-travis-base-image.sh /root/prepare-travis-base-image.sh
-ADD prepare-travis-language-image.sh /root/prepare-travis-language-image.sh
+ADD base-install.sh     /root/
+ADD base-configure.sh   /root/
+ADD language-install.sh /root/
+ADD travis-run.pub      /root/
 
-RUN sh -x /root/prepare-vm.sh travis
+RUN sh -x /root/base-install.sh
+RUN sh -x /root/base-configure.sh travis
 RUN apt-get install -y openssh-server; mkdir /var/run/sshd

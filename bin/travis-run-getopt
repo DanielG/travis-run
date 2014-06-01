@@ -25,7 +25,6 @@ opts = GetoptLong.new(
      ["-n",     GetoptLong::REQUIRED_ARGUMENT ])
 
 argopts = []
-nargopts = []
 options = []
 progname = ""
 
@@ -34,10 +33,9 @@ opts.each do |opt,arg|
   when "--long"
     arg.split(",").each do |optspec|
       if optspec.end_with? ":" then
-        argopts << optspec[0..-2]
+        argopts << "--" + optspec[0..-2]
         options << ["--" + optspec[0..-2], GetoptLong::REQUIRED_ARGUMENT]
       else
-        nargopts << optspec
         options << ["--" + optspec, GetoptLong::NO_ARGUMENT]
       end
     end
@@ -53,7 +51,7 @@ opts.each do |opt,arg|
     noarg_opts = noarg_opts_.split ""
 
     arg_opts.each do |opt|
-      argopts << opt[0]
+      argopts << "-" + opt[0]
       options << ["-" + opt[0], GetoptLong::REQUIRED_ARGUMENT]
     end
 
@@ -65,21 +63,22 @@ opts.each do |opt,arg|
     progname.replace arg
   else
     $stderr.puts "travis-run-getopt: unrecognized option '"+ opt +"'"
+    exit
   end
 end
 
 args = []
 extopts = GetoptLong.new(*options)
 extopts.each do |opt,arg|
-  args << opt
+  args << opt.strip
   if argopts.include? opt then
-    args << "'" + arg +"'"
+    args << "'" + arg.strip + "'"
   end
 end
 
 args << "--"
 args += ARGV.map do |a|
-  "'" + a + "'"
+  "'" + a.strip + "'"
 end
 
 puts args.join " "
