@@ -3,8 +3,12 @@ FROM debian:wheezy
 RUN apt-get update && apt-get install -y ruby-dev build-essential git wget
 RUN gem install --no-ri --no-rdoc bundler
 
-ADD script/  /root/script/
+RUN mkdir -p /root/script/
+ADD script/Gemfile       /root/script/
+ADD script/Gemfile.lock  /root/script/
 RUN cd /root/script && bundle install --system
+
+ADD script/  /root/script/
 
 WORKDIR /root/script
 CMD []
