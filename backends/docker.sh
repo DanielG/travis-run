@@ -40,8 +40,6 @@ docker_create () {
 	exit 1
     fi
 
-    echo STAGE $OPT_STAGE
-
     echo "Creating base image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
@@ -82,7 +80,7 @@ docker_create () {
 	sed 's/$FROM/'"${VM_NAME}_base"'/' \
 	    < $SHARE_DIR/docker/Dockerfile.language \
 	    > ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE/Dockerfile
-	sed -i 's/$OPT_LANGUAGE/'"$OPT_LANGUAGE"'/' \
+	sed -i "sed" 's/$OPT_LANGUAGE/'"$OPT_LANGUAGE"'/' \
 	    ~/.travis-run/${VM_NAME}_$OPT_LANGUAGE/Dockerfile
 
 	docker build -t ${VM_NAME}_$OPT_LANGUAGE \
