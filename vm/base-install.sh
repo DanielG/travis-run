@@ -4,7 +4,7 @@ echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/00assume-yes
 apt-get update
 
 apt-get install \
-    sudo git rsync \
+    sudo git rsync wget \
     rubygems ruby-dev \
     python-software-properties
 
