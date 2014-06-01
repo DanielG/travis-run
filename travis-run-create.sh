@@ -28,7 +28,7 @@ LANGUAGE=""
 perl -e 'use YAML;' >/dev/null 2>&1
 PERL_YAML=$?
 
-ruby -e 'require "bla"' >/dev/null 2>&1
+ruby -e 'require "yaml"' >/dev/null 2>&1
 RUBY_YAML=$?
 
 if [ $PERL_YAML -ne 0 ] && [ $RUBY_YAML -ne 0 ]; then
