@@ -20,6 +20,11 @@ BIN_DIR=$(dirname $0)/bin
 
 GETOPT=$BIN_DIR/travis-run-getopt
 
+# on Debian docker's executable is called docker.io
+if which docker.io >/dev/null; then
+    alias docker=docker.io
+fi
+
 ################################################################################
 # Utilities
 
