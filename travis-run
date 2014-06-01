@@ -25,7 +25,7 @@ usage () {
     echo "\t-b, --backend=BACKEND"
     echo "\t\tVirtualization backend to use. Currently avalialbe backends:"
     echo "\t\t  $(echo $BACKENDS | sed 's/ /, /g')"
-    echo "\t\t(defaults to: vagrant)"
+    echo "\t\t(defaults to: docker)"
 
     echo "\t-k, --keep"
     echo "\t\tDo not stop and destroy VM after build finishes. This is useful"
@@ -54,11 +54,11 @@ usage () {
     echo "\t\trunning the build before and after the build so make sure your"
     echo "\t\t.travis.yml contains a \`clean' action before attempting the"
     echo "\t\tbuild."
-    echo "\t\tBackend Options for \`schroot':"
-    echo "\t\t\t--schrot-user=USER"
-    echo "\t\t\t\tName of the user to run commands inside the"
-    echo "\t\t\t\tchroot as, see -u option of the \`schroot'"
-    echo "\t\t\t\tcommand."
+#    echo "\t\tBackend Options for \`schroot':"
+#    echo "\t\t\t--schrot-user=USER"
+#    echo "\t\t\t\tName of the user to run commands inside the"
+#    echo "\t\t\t\tchroot as, see -u option of the \`schroot'"
+#    echo "\t\t\t\tcommand."
     echo
     echo
 
@@ -71,17 +71,19 @@ usage () {
     echo "\tcreate"
     echo "\t\tSetup build VM. Depending on the backend it might be stored"
     echo "\t\tglobally or in \`.travis-run' in the current directory."
-    echo "\t\tBackend Options for \`schroot':"
-    echo "\t\t\t--schrot-user=USER"
-    echo "\t\t\t\tName of the user outside the schroot that will"
-    echo "\t\t\t\trun \`travis-run'. This is needed for file"
-    echo "\t\t\t\tsync to work. (required)"
-    echo "\t\tBackend Options for \`vagrant':"
-    echo "\t\t\t--vagrant-docker-from=BASE_IMAGE"
+#    echo "\t\tBackend Options for \`schroot':"
+#    echo "\t\t\t--schrot-user=USER"
+#    echo "\t\t\t\tName of the user outside the schroot that will"
+#    echo "\t\t\t\trun \`travis-run'. This is needed for file"
+#    echo "\t\t\t\tsync to work. (required)"
+    echo "\t\tBackend Options for \`docker':"
+    echo "\t\t\t--docker-base-image=BASE_IMAGE"
     echo "\t\t\t\tDocker image to use as the base for the"
     echo "\t\t\t\tcontainer, see \`FROM' Dockerfile command."
     echo "\t\t\t\t(defaults to: ubuntu:presice)"
-    echo "TODO: docker-build-stage"
+    echo "\t\t\t--docker-build-stage=STAGE"
+    echo "\t\t\t\tStage of the image build to run, can be one of:"
+    echo "\t\t\t\tbase, script, language, project"
     echo
     echo
 

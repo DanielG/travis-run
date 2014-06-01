@@ -1,8 +1,0 @@
-TODO List
-=========
-
-- Don't require ruby on the host machine
-
-  `travis-run-create.sh` already supports detecting the language of the project
-  by using perl we just need to install the scripts needed to generate the build
-  script into the VM, `bundle install` it (possibly at creatin time).

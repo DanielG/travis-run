@@ -1,13 +1,12 @@
 travis-run
 ==========
 
-Run *travis-ci* build locally with *schroot* or *Vagrant*+*Docker*.
+Run *travis-ci* builds locally using *Docker*.
 
 Installation
 ============
 
-For now you should just clone https://github.com/DanielG/travis-run.git, run
-`bundle install` in there and add the directory to your *PATH*.
+Just add this directory to your *PATH*.
 
 Usage
 =====
@@ -16,32 +15,21 @@ Usage
 
   You should run this in your project directory.
 
-  With the `vagrant` backend this involves doing a `docker build` inside the
-  Host VM or on the system running `travis-run-create` (with Linux). It will
-  also create a directory `.travis-run/` that will contain the *Vagrantfile* and
-  *Dockerfile* which you may modify and commit to version control.
+  This will create a directory `.travis-run/` that will contain a *Dockerfile*
+  which you may modify and commit to version control.
 
 - Run your builds locally: `travis-run`
 
-  This will spin up the Vagrant Host VM if needed, create a new docker
-  container, copy the build directory into the container and execute the build
-  as it would be on travis-ci.
-
-  _Note_ that unlike travis-ci *travis-run* doesn't do a clean `git checkout`
-  but rather just copies the contents of the current directory as is. This might
-  lead to the build failing because the build directory is unclean, however this
-  is still desirable as it allows us to do a build without committing
-  changes. To avoid this you should run a `clean` action before anything else in
-  the *script* section of your `.travis.yml`.
-
+  This will create a new docker container, copy the build directory into the
+  container and execute the build as it would be on travis-ci.
 
 ```
 Usage: ./travis-run [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]
 Global Options (OPTIONS):
 	-b, --backend=BACKEND
 		Virtualization backend to use. Currently avalialbe backends:
-		  schroot, vagrant
-		(defaults to: vagrant)
+		  docker
+		(defaults to: docker)
 	-k, --keep
 		Do not stop and destroy VM after build finishes. This is useful
 		during development as you will only have to go through
@@ -67,12 +55,6 @@ Commands (COMMAND):
 		.travis.yml contains a `clean' action before attempting the
 		build.
 
-		Backend Options for `schroot':
-			--schrot-user=USER
-				Name of the user to run commands inside the
-				chroot as, see -u option of the `schroot'
-				command.
-
 
 	stop
 		Stop running build VM. This will tear down the VM as well as
@@ -82,16 +64,14 @@ Commands (COMMAND):
 	create
 		Setup build VM. Depending on the backend it might be stored
 		globally or in `.travis-run' in the current directory.
-		Backend Options for `schroot':
-			--schrot-user=USER
-				Name of the user outside the schroot that will
-				run `travis-run'. This is needed for file
-				sync to work. (required)
-		Backend Options for `vagrant':
-			--vagrant-docker-from=BASE_IMAGE
+		Backend Options for `docker':
+			--docker-base-image=BASE_IMAGE
 				Docker image to use as the base for the
 				container, see `FROM' Dockerfile command.
 				(defaults to: ubuntu:presice)
+			--docker-build-stage=STAGE
+				Stage of the image build to run, can be one of:
+				base, script, language, project
 
 
 	clean
