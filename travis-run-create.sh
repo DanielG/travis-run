@@ -39,10 +39,10 @@ else
     LANGUAGE=$(ruby -e 'require "yaml"; puts YAML.load_file(".travis.yml")["language"]')
 fi
 
-if [ ! $LANGUAGE ]; then
+if [ ! "$LANGUAGE" ]; then
     echo "Could not detect language, please add a \`language:' declaration">&2
     echo "to your \`.travis.yml'."
     exit 1
 fi
 
-backend_create $OPT_VM_NAME $LANGUAGE
+backend_create "$OPT_VM_NAME" "$LANGUAGE"

@@ -6,8 +6,8 @@ if [ ! -e .travis.yml ]; then
     exit 1
 fi
 
-if [ ! $OPT_KEEP ]; then
-    trap "backend_end $OPT_VM_NAME" 0 2 15
+if [ ! "$OPT_KEEP" ]; then
+    trap 'backend_end '"$OPT_VM_NAME" 0 2 15
 fi
 
 backend_init "$OPT_VM_NAME"
@@ -28,19 +28,19 @@ run_tests () {
 	# echo 'trap "travis_run_onexit" 0 2 15'
 
     printf "%s\n" "$1" \
-	| backend_run_script $OPT_VM_NAME --build \
-	| backend_run $OPT_VM_NAME copy -- bash
+	| backend_run_script "$OPT_VM_NAME" --build \
+	| backend_run "$OPT_VM_NAME" copy -- bash
 
     if [ $? -ne 0 ]; then
     	echo "Build failed, please investigate." >&2
-	backend_run $OPT_VM_NAME nocopy
+	backend_run "$OPT_VM_NAME" nocopy
     fi
 }
 
-cfgs=$(backend_run_script $OPT_VM_NAME < .travis.yml)
+cfgs=$(backend_run_script "$OPT_VM_NAME" < .travis.yml)
 
 BIFS="$IFS"
-IFS=$(echo); for cfg in $(printf "%s\n" "$cfgs"); do
+IFS=$(printf '\n'); for cfg in $(printf '%s\n' "$cfgs"); do
     IFS=$BIFS run_tests "$cfg"
     exit
 done

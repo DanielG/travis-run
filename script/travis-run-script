@@ -79,7 +79,13 @@ if ARGV.length == 0 then
   puts configs($stdin.read)
 elsif ARGV.length == 1 && ARGV[0] == "--build" then
   puts script($stdin.read)
+elsif ARGV.length == 1 && ARGV[0] == "--test" then
+  if $stdin.read().length == 0 then
+    exit 1
+  end
+  exit 0
 else
+
   puts "Usage: travis-run-script [--build]"
   exit 1
 end

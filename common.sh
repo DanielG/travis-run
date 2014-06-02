@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-SHARE_DIR=$(dirname $0)
-BIN_DIR=$(dirname $0)/bin
+export SHARE_DIR="$(dirname "$0")"
+export BIN_DIR="$(dirname "$0")/bin"
 
-GETOPT=$BIN_DIR/travis-run-getopt
+export GETOPT=$BIN_DIR/travis-run-getopt
 
 # on Debian docker's executable is called docker.io
 if which docker.io >/dev/null; then
@@ -30,7 +30,7 @@ fi
 
 strip_home () {
     home=$(echo "$HOME/" | sed 's|//|/|g')
-    echo $1 | sed "s|$home||"
+    echo "$1" | sed "s|$home||"
 }
 
 head () {
@@ -53,10 +53,10 @@ backend_register_longopt () {
 }
 
 BACKENDS=""
-for b in $(dirname $0)/backends/*.sh; do
-    name=$(basename -s .sh $b)
+for b in $(dirname "$0")/backends/*.sh; do
+    name=$(basename -s .sh "$b")
     BACKENDS="${BACKENDS} $name"
-    . $b
+    . "$b"
 done
 
 ##
@@ -64,7 +64,7 @@ done
 #
 # Usage: backend_init VM_NAME
 backend_init () {
-    ${OPT_BACKEND}_init "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_init "$@" "$BACKEND_ARGS"
 }
 
 ##
@@ -78,7 +78,7 @@ backend_init () {
 #
 # Usage: backend_end VM_NAME
 backend_end () {
-    ${OPT_BACKEND}_end "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_end "$@" "$BACKEND_ARGS"
 }
 
 
@@ -87,7 +87,7 @@ backend_end () {
 #
 # Usage: backend_create VM_NAME LANGUAGE
 backend_create () {
-    ${OPT_BACKEND}_create "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_create "$@" "$BACKEND_ARGS"
 }
 
 ##
@@ -95,7 +95,7 @@ backend_create () {
 #
 ## Usage: backend_run VM_NAME [OPTIONS..]
 backend_run_script () {
-    ${OPT_BACKEND}_run_script "$@"
+    "${OPT_BACKEND}"_run_script "$@"
 }
 
 ##
@@ -110,5 +110,5 @@ backend_run_script () {
 #
 ## Usage: backend_run VM_NAME COPY? -- COMMAND
 backend_run () {
-    ${OPT_BACKEND}_run "$@"
+    "${OPT_BACKEND}"_run "$@"
 }

@@ -16,81 +16,82 @@
 
 ## Run .travis.yml build inside a schroot over ssh
 
-. $(dirname $0)/common.sh
+. "$(dirname "$0")/common.sh"
 
 usage () {
-    echo "Usage: $0 [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]"
-    echo "Global Options (OPTIONS):"
+    printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]" "$0"
+    printf "\
+Global Options (OPTIONS):\n\
+	-b, --backend=BACKEND\n\
+		Virtualization backend to use. Currently available backends:\n\
+		    %s\n\
+		(defaults to: docker)\n\
+\n\
+	-k, --keep\n\
+		Don't stop and destroy VM after build finishes. This is useful\n\
+		during development as you will only have to go through\n\
+		VM creation once. Make sure to \`travis-run clean' or\n\
+		\`travis-run stop' after you're done with the VM.\n\
+\n\
+	-n, --vm-name=VM_NAME\n\
+		Arbitrary identifier associated with the build VM. (defaults\n\
+		to: travis-run-vm). The backend may support persistent options\n\
+		per VM referenced by name, see backend documentation for\n\
+		details.\n\
+\n\
+\n\
+" "$(echo "$BACKENDS" | sed 's/ /, /g')"
 
-    echo "\t-b, --backend=BACKEND"
-    echo "\t\tVirtualization backend to use. Currently avalialbe backends:"
-    echo "\t\t  $(echo $BACKENDS | sed 's/ /, /g')"
-    echo "\t\t(defaults to: docker)"
+    printf "\
+Global Backend Options (BACKEND_OPTIONS):\n\
+	None so far, see Commands for command specific backend options.\n\
+\n\
+\n\
+Commands (COMMAND):\n\
+	run (default if no command given)\n\
+		Run the build matrix in sequence and abort on the first\n\
+		failure dropping into a shell for diagnostics by default. Note\n\
+		that by default the project directory is also synchronized\n\
+		with the VM running the build before and after the build so\n\
+		make sure your .travis.yml contains a \`clean' action before\n\
+		attempting the build.\n\
+\n\
+\n\
+	stop\n\
+		Stop running build VM. This will tear down the VM as well as\n\
+		all it's disk state.\n\
+\n\
+\n\
+	create\n\
+		Setup build VM. Depending on the backend it might be stored\n\
+		globally or in \`.travis-run' in the current directory.\n\
+		Backend Options for \`docker':\n\
+			--docker-base-image=BASE_IMAGE\n\
+				Docker image to use as the base for the\n\
+				container, see \`FROM' Dockerfile command.\n\
+				(defaults to: ubuntu:presice)\n\
+			--docker-build-stage=STAGE\n\
+				Stage of the image build to run, (one of:\n\
+				  base, script, language, project)\n\
+\n\
+\n\
+	clean
+		Stop running build VM, and clean any backend specific state\n\
+		kept in the project directory.\n\
+\n\
+"
 
-    echo "\t-k, --keep"
-    echo "\t\tDo not stop and destroy VM after build finishes. This is useful"
-    echo "\t\tduring development as you will only have to go through"
-    echo "\t\tVM creation once. Make sure to \`travis-run clean' or"
-    echo "\t\t\`travis-run stop' after you're done with the VM."
 
-    echo "\t-n, --vm-name=VM_NAME"
-    echo "\t\tArbitrary identifier associated with the build VM. (defaults"
-    echo "\t\tto: travis-run-vm). The backend may support persistent options"
-    echo "\t\tper VM referenced by name, see backend documentation for "
-    echo "\t\tdetails."
-    echo
-    echo
-
-    echo "Global Backend Options (BACKEND_OPTIONS):"
-    echo "\tNone so far, see Commands for command specific backend options."
-    echo
-    echo
-
-    echo "Commands (COMMAND):"
-    echo "\trun (default if no command given)"
-    echo "\t\tRun the build matrix in sequence and abort on the first failure"
-    echo "\t\tdropping into a shell for diagnostics by default. Note that by"
-    echo "\t\tdefault the project directory is also synchronized with the VM"
-    echo "\t\trunning the build before and after the build so make sure your"
-    echo "\t\t.travis.yml contains a \`clean' action before attempting the"
-    echo "\t\tbuild."
-#    echo "\t\tBackend Options for \`schroot':"
-#    echo "\t\t\t--schrot-user=USER"
-#    echo "\t\t\t\tName of the user to run commands inside the"
-#    echo "\t\t\t\tchroot as, see -u option of the \`schroot'"
-#    echo "\t\t\t\tcommand."
-    echo
-    echo
-
-    echo "\tstop"
-    echo "\t\tStop running build VM. This will tear down the VM as well as"
-    echo "\t\tall it's disk state."
-    echo
-    echo
-
-    echo "\tcreate"
-    echo "\t\tSetup build VM. Depending on the backend it might be stored"
-    echo "\t\tglobally or in \`.travis-run' in the current directory."
-#    echo "\t\tBackend Options for \`schroot':"
-#    echo "\t\t\t--schrot-user=USER"
-#    echo "\t\t\t\tName of the user outside the schroot that will"
-#    echo "\t\t\t\trun \`travis-run'. This is needed for file"
-#    echo "\t\t\t\tsync to work. (required)"
-    echo "\t\tBackend Options for \`docker':"
-    echo "\t\t\t--docker-base-image=BASE_IMAGE"
-    echo "\t\t\t\tDocker image to use as the base for the"
-    echo "\t\t\t\tcontainer, see \`FROM' Dockerfile command."
-    echo "\t\t\t\t(defaults to: ubuntu:presice)"
-    echo "\t\t\t--docker-build-stage=STAGE"
-    echo "\t\t\t\tStage of the image build to run, can be one of:"
-    echo "\t\t\t\tbase, script, language, project"
-    echo
-    echo
-
-    echo "\tclean"
-    echo "\t\tStop running build VM, and clean any backend specific state "
-    echo "\t\tkept in the project directory."
-    echo
+#		Backend Options for \`schroot':"
+#			--schrot-user=USER"
+#				Name of the user to run commands inside the"
+#				chroot as, see -u option of the \`schroot'"
+#				command."
+#		Backend Options for \`schroot':"
+#			--schrot-user=USER"
+#				Name of the user outside the schroot that will"
+#				run \`travis-run'. This is needed for file"
+#				sync to work. (required)"
 }
 
 TRAVIS_GETOPT_LONG="help,keep,vm-name,backend:"
@@ -105,7 +106,7 @@ fi
 OPTS=$($GETOPT \
     -o "$TRAVIS_GETOPT_SHORT" \
     --long "$LONGOPTS" \
-    -n "$(basename $0)" -- "$@")
+    -n "$(basename "$0")" -- "$@")
 eval set -- "$OPTS"
 
 BACKEND_ARGS=""
@@ -133,7 +134,7 @@ done
 
 ## Global Options
 
-# OPT_KEEP unset by default
+OPT_KEEP=$OPT_KEEP # OPT_KEEP unset by default
 OPT_VM_NAME=${OPT_VM_NAME:-travis-run-amd64}
 OPT_BACKEND=${OPT_BACKEND:-docker}
 
@@ -146,10 +147,10 @@ else
 fi
 
 case "$COMMAND" in
-    run)    ( . $(dirname $0)/travis-run-run.sh    );;
-    stop)   ( backend_end $OPT_VM_NAME             );;
-    create) ( . $(dirname $0)/travis-run-create.sh );;
-    clean)  ( . $(dirname $0)/travis-run-clean.sh  );;
+    run)    ( . "$(dirname "$0")"/travis-run-run.sh    );;
+    stop)   ( backend_end "$OPT_VM_NAME"               );;
+    create) ( . "$(dirname "$0")"/travis-run-create.sh );;
+    clean)  ( . "$(dirname "$0")"/travis-run-clean.sh  );;
     *)
 	echo "Error: unknown command \"$COMMAND\"">&2
 	echo "See \`$0 --help' for a list of valid commands"
