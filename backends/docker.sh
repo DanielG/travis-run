@@ -64,7 +64,8 @@ docker_create () {
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_script"
 	rm -rf ~/.travis-run/"${VM_NAME}_script"/script
-	cp -a "$SHARE_DIR/script" ~/.travis-run/"${VM_NAME}_script"
+	cp -a "$SHARE_DIR/script"            ~/.travis-run/"${VM_NAME}_script"
+	cp "$SHARE_DIR/keys/travis-run.pub"  ~/.travis-run/"${VM_NAME}_script"
 
 	sed "s/\$FROM/${VM_NAME}_base"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.script" \
