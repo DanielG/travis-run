@@ -17,7 +17,7 @@
 LANGUAGE=$1; shift
 
 case "$LANGUAGE" in
-    haskell) RUNLIST="-o haskell -o haskell::multi" ;;
+    haskell) RUNLIST="-o haskell::multi -o sweeper" ;;
     *)
 	echo "Warning: Untested language: $LANGUAGE"
 	RUNLIST="$LANGUAGE"
