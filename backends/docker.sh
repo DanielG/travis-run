@@ -83,7 +83,7 @@ docker_create () {
 	sed "s/\$FROM/${VM_NAME}_base"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.language" \
 	    > ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"/Dockerfile
-	sed -i "sed" "s/\$OPT_LANGUAGE/$OPT_LANGUAGE"'/' \
+	sed -i "s/\$OPT_LANGUAGE/$OPT_LANGUAGE"'/' \
 	    ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"/Dockerfile
 
 	docker build -t "${VM_NAME}_$OPT_LANGUAGE" \
