@@ -47,7 +47,6 @@ docker_create () {
 	mkdir -p ~/.travis-run/"${VM_NAME}_base"
 	cp "$SHARE_DIR/vm/base-install.sh"     ~/.travis-run/"${VM_NAME}_base"
 	cp "$SHARE_DIR/vm/base-configure.sh"   ~/.travis-run/"${VM_NAME}_base"
-	cp "$SHARE_DIR/vm/language-install.sh" ~/.travis-run/"${VM_NAME}_base"
 	cp "$SHARE_DIR/keys/travis-run.pub"    ~/.travis-run/"${VM_NAME}_base"
 
 	sed "s/\$OPT_FROM/$OPT_FROM"'/' \
@@ -79,6 +78,8 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && exit
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"
+	cp "$SHARE_DIR/vm/language-install.sh" \
+	    ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"
 
 	sed "s/\$FROM/${VM_NAME}_base"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.language" \

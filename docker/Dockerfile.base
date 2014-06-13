@@ -9,7 +9,6 @@ EXPOSE 22
 
 ADD base-install.sh     /root/
 ADD base-configure.sh   /root/
-ADD language-install.sh /root/
 ADD travis-run.pub      /root/
 
 RUN sh -x /root/base-install.sh

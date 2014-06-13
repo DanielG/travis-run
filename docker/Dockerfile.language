@@ -7,4 +7,6 @@ WORKDIR /root
 CMD /usr/sbin/sshd -D
 EXPOSE 22
 
+ADD language-install.sh /root/
+
 RUN sh -x /root/language-install.sh $OPT_LANGUAGE
