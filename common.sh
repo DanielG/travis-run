@@ -1,4 +1,3 @@
-#!/bin/sh
 # Copyright (C) 2014  Daniel Gröber <dxld ÄT darkboxed DOT org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,6 +19,8 @@ export LIB_DIR="$(dirname "$0")/lib"
 if getopt -T >/dev/null 2>&1; then
     # Those silly BSDs need a proper getopt
     export GETOPT=$LIB_DIR/travis-run-getopt
+else
+    export GETOPT=getopt
 fi
 
 # on Debian docker's executable is called docker.io gah ...
