@@ -1,14 +1,14 @@
 #!/bin/sh
 
-BIN_DIR="$DESTDIR/usr/bin"
-LIB_DIR="$DESTDIR/usr/lib/travis-run/"
-SHARE_DIR="$DESTDIR/usr/share/travis-run/"
-MAN1_DIR="$DESTDIR/usr/share/man/man1"
+BIN_DIR="/usr/bin"
+LIB_DIR="/usr/lib/travis-run/"
+SHARE_DIR="/usr/share/travis-run/"
+MAN1_DIR="/usr/share/man/man1"
 
-mkdir -p "$BIN_DIR"
-mkdir -p "$SHARE_DIR/backends"
-mkdir -p "$LIB_DIR"
-mkdir -p "$MAN1_DIR"
+mkdir -p "$DESTDIR/$BIN_DIR"
+mkdir -p "$DESTDIR/$SHARE_DIR/backends"
+mkdir -p "$DESTDIR/$LIB_DIR"
+mkdir -p "$DESTDIR/$MAN1_DIR"
 
 replace_paths () {
     sed -r \
@@ -18,12 +18,12 @@ replace_paths () {
 
 replace_paths \
     < common.sh \
-    > "$SHARE_DIR/common.sh"
+    > "$DESTDIR/$SHARE_DIR/common.sh"
 
 replace_paths \
     < travis-run \
-    > "$BIN_DIR/travis-run"
-chmod +x "$BIN_DIR/travis-run"
+    > "$DESTDIR/$BIN_DIR/travis-run"
+chmod +x "$DESTDIR/$BIN_DIR/travis-run"
 
 cp -R \
     travis-run-create.sh \
@@ -32,12 +32,12 @@ cp -R \
     docker/ \
     keys/ \
     script/ \
-    "$SHARE_DIR"
+    "$DESTDIR/$SHARE_DIR"
 
-cp travis-run.1 "$MAN1_DIR"
+cp travis-run.1 "$DESTDIR/$MAN1_DIR"
 
-cp lib/travis-run-getopt "$LIB_DIR"
+cp lib/travis-run-getopt "$DESTDIR/$LIB_DIR"
 
 for backend in backends/*.sh; do
-    cp "$backend" "$SHARE_DIR/backends"
+    cp "$backend" "$DESTDIR/$SHARE_DIR/backends"
 done
