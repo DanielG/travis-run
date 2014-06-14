@@ -12,7 +12,32 @@ published by them.
 Installation
 ============
 
-Just add this directory to your *PATH*.
+The simplest way to install travis-run is to just `git clone
+https://github.com/DanielG/travis-run.git` and add the resulting directory to
+your *PATH*.
+
+If you want to get more fancy the following installation methods are also
+available:
+
+Debian
+------
+
+```
+$ git clone https://github.com/DanielG/travis-run.git
+$ cd travis-run
+$ debuild -uc -us
+# dpkg -i ../travis-run_*.deb
+```
+
+OS X
+----
+
+This is currently broken, blocking on Homebrew/homebrew#29513 which in turn is
+blocking on dotcloud/docker#6256 *
+
+```
+brew install travis-run
+```
 
 Usage
 =====
@@ -27,7 +52,13 @@ Usage
 - Run your builds locally: `travis-run`
 
   This will create a new docker container, copy the build directory into the
-  container and execute the build as it would be on travis-ci.
+  container and execute the build as it would be on travis-ci. Different
+  configurations (i.e. different runtime versions/`env` variables) will be run
+  one after another.
+
+
+Man Page
+========
 
 ```
 TRAVIS-RUN(1)                    User Commands                   TRAVIS-RUN(1)
