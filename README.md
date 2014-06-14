@@ -32,8 +32,8 @@ $ debuild -uc -us
 OS X
 ----
 
-This is currently broken, blocking on Homebrew/homebrew#29513 which in turn is
-blocking on dotcloud/docker#6256 *
+This is currently broken, blocking on [Homebrew/homebrew#29513](https://github.com/Homebrew/homebrew/pull/29513) which in turn is
+blocking on [dotcloud/docker#6256](https://github.com/dotcloud/docker/issues/6256)
 
 ```
 brew install travis-run
