@@ -1,7 +1,13 @@
 travis-run
 ==========
 
-Run *travis-ci* builds locally using *Docker*.
+travis-run creates virtual machines resembling the build environment provided by
+the travis-ci.org continuous integration service. This is so one can run and
+debug builds locally, which should take most of the guesswork out of fixing
+problems that only occur on travis-ci but not on the developer's machine. To do
+this, we use the same chef-solo cookbooks used by travis-ci and generate the
+script to drive the build from the .travis.yml file using the ruby libraries
+published by them.
 
 Installation
 ============
@@ -24,57 +30,61 @@ Usage
   container and execute the build as it would be on travis-ci.
 
 ```
-Usage: ./travis-run [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]
-Global Options (OPTIONS):
-	-b, --backend=BACKEND
-		Virtualization backend to use. Currently avalialbe backends:
-		  docker
-		(defaults to: docker)
-	-k, --keep
-		Do not stop and destroy VM after build finishes. This is useful
-		during development as you will only have to go through
-		VM creation once. Make sure to `travis-run clean' or
-		`travis-run stop' after you're done with the VM.
-	-n, --vm-name=VM_NAME
-		Arbitrary identifier associated with the build VM. (defaults
-		to: travis-run-vm). The backend may support persistent options
-		per VM referenced by name, see backend documentation for
-		details.
+TRAVIS-RUN(1)                    User Commands                   TRAVIS-RUN(1)
 
+NAME
+       travis-run - Run travis-ci builds locally using Docker
 
-Global Backend Options (BACKEND_OPTIONS):
-	None so far, see Commands for command specific backend options.
+SYNOPSIS
+       travis-run [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]
 
+GLOBAL OPTIONS
+       -b, --backend=BACKEND
 
-Commands (COMMAND):
-	run (default if no command given)
-		Run the build matrix in sequence and abort on the first failure
-		dropping into a shell for diagnostics by default. Note that by
-		default the project directory is also synchronized with the VM
-		running the build before and after the build so make sure your
-		.travis.yml contains a `clean' action before attempting the
-		build.
+              Virtualization  backend  to  use.  Currently  available backends
+              (defaults to: docker):
 
+              - docker
 
-	stop
-		Stop running build VM. This will tear down the VM as well as
-		all it's disk state.
+       -k, --keep
 
+              Don't stop and destroy VM after build finishes. This  is  useful
+              during  development  as you will only have to go through VM cre‐
+              ation once. Make sure to `travis-run clean' or `travis-run stop'
+              after you're done with the VM.
 
-	create
-		Setup build VM. Depending on the backend it might be stored
-		globally or in `.travis-run' in the current directory.
-		Backend Options for `docker':
-			--docker-base-image=BASE_IMAGE
-				Docker image to use as the base for the
-				container, see `FROM' Dockerfile command.
-				(defaults to: ubuntu:presice)
-			--docker-build-stage=STAGE
-				Stage of the image build to run, can be one of:
-				base, script, language, project
+       -n, --vm-name=VM_NAME
 
+              Arbitrary identifier associated with the build VM. (defaults to:
+              travis-run-vm). The backend may support persistent  options  per
+              VM referenced by name, see backend documentation for details.
 
-	clean
-		Stop running build VM, and clean any backend specific state
-		kept in the project directory.
+COMMANDS
+   run (default if no command given):
+              Run  the build matrix in sequence and abort on the first failure
+              dropping into a shell for diagnostics by default. Note  that  by
+              default  the  project directory is also synchronized with the VM
+              running the build before and after the build so make  sure  your
+              .travis.yml  contains  a  `clean'  action  before attempting the
+              build.
+
+   stop:
+              Stop running build VM. This will tear down the VM  as  well  as\
+              all it's disk state.
+
+   create:
+              Setup  build  VM.  Depending  on  the backend it might be stored
+              globally or in `.travis-run' in the current directory.
+
+       --docker-base-image=BASE_IMAGE
+              Docker image to use as the base for the  container,  see  `FROM'
+              Dockerfile command.  (defaults to: ubuntu:presice)
+
+       --docker-build-stage=STAGE
+              Stage  of  the  image  build to run, (one of: base, script, lan‐
+              guage, project)
+
+   clean:
+              Stop running build VM, and clean any backend specific state kept
+              in the project directory.
 ```
