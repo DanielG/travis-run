@@ -1,9 +1,9 @@
 travis-run
 ==========
 
-travis-run creates virtual machines resembling the build environment provided by
-the travis-ci.org continuous integration service. This is so one can run and
-debug builds locally, which should take most of the guesswork out of fixing
+*travis-run* creates virtual machines resembling the build environment provided
+by the *travis-ci.org* continuous integration service. This is so one can run
+and debug builds locally, which should take most of the guesswork out of fixing
 problems that only occur on travis-ci but not on the developer's machine. To do
 this, we use the same chef-solo cookbooks used by travis-ci and generate the
 script to drive the build from the .travis.yml file using the ruby libraries
@@ -12,7 +12,7 @@ published by them.
 Installation
 ============
 
-The simplest way to install travis-run is to just `git clone
+The simplest way to install *travis-run* is to just `git clone
 https://github.com/DanielG/travis-run.git` and add the resulting directory to
 your *PATH*.
 
@@ -59,9 +59,10 @@ Usage
 
 Man Page
 ========
-
 ```
 TRAVIS-RUN(1)                    User Commands                   TRAVIS-RUN(1)
+
+
 
 NAME
        travis-run - Run travis-ci builds locally using Docker
@@ -118,4 +119,8 @@ COMMANDS
    clean:
               Stop running build VM, and clean any backend specific state kept
               in the project directory.
+
+
+
+travis-run 0.1                     June 2014                     TRAVIS-RUN(1)
 ```
