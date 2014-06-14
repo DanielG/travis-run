@@ -1,5 +1,3 @@
-#!/bin/sh
-
 backend_register_longopt "vagrant-docker-from:"
 
 vagrant_check_state_dir () {

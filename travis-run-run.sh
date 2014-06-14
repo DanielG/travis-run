@@ -1,4 +1,3 @@
-#!/bin/sh
 # This script will be sourced by travis-run
 
 if [ ! -e .travis.yml ]; then

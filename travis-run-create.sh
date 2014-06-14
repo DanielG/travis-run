@@ -1,4 +1,3 @@
-#!/bin/sh
 # Copyright (C) 2014  Daniel Gröber <dxld ÄT darkboxed DOT org>
 #
 # This program is free software: you can redistribute it and/or modify

@@ -1,5 +1,3 @@
-#!/bin/sh
-
 backend_register_longopt "docker-base-image:"
 backend_register_longopt "docker-build-stage:"
 
