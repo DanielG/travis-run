@@ -1,0 +1,22 @@
+Source: travis-run
+Section: devel
+Priority: optional
+Maintainer: Daniel Gröber <dxld@darkboxed.org>
+Build-Depends: debhelper (>= 9.0.0)
+Standards-Version: 3.9.5
+Homepage: https://github.com/DanielG/travis-run
+Vcs-Git: https://github.com/DanielG/travis-run.git
+Vcs-Browser: https://github.com/DanielG/travis-run
+
+Package: travis-run
+Architecture: all
+Depends: ${misc:Depends}
+Suggests: ruby
+Description: Run travis-ci builds locally using Docker
+ travis-run creates virtual machines resembling the build environment provided
+ by the travis-ci.org continuous integration service. This is so one can run and
+ debug builds locally, which should take most of the guesswork out of fixing
+ problems that only occur on travis-ci but not on the developer's machine. To do
+ this, we use the same chef-solo cookbooks used by travis-ci and generate the
+ script to drive the build from the .travis.yml file using the ruby libraries
+ published by them.
