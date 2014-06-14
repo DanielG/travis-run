@@ -1,24 +1,39 @@
 #!/bin/sh
 
-mkdir -p "$DESTDIR/usr/share/travis-run/"
-mkdir -p "$DESTDIR/usr/share/travis-run/backends"
-mkdir -p "$DESTDIR/usr/bin/"
+BIN_DIR="$DESTDIR/usr/bin"
+LIB_DIR="$DESTDIR/usr/lib/travis-run/"
+SHARE_DIR="$DESTDIR/usr/share/travis-run/"
 
-# $(dirname $0)/backends/* -> /usr/share/travis-run/backends/*
-# $(dirname $0)/* -> /usr/share/travis-run/*
+mkdir -p "$BIN_DIR"
+mkdir -p "$SHARE_DIR/backends"
+mkdir -p "$LIB_DIR"
 
-for f in travis-run travis-run-create; do
-    sed -e 's|$(dirname $0)/|/usr/share/travis-run/|g' \
-	< "$f" \
-	> "$DESTDIR/usr/bin/$f"
-    chmod +x "$DESTDIR/usr/bin/$f"
-done
+replace_paths () {
+    sed -r \
+	-e 's|(export SHARE_DIR)=.*$|\1='"$SHARE_DIR"'|' \
+	-e 's|(export LIB_DIR)=.*$|\1='"$LIB_DIR"'|'
+}
 
-cp travis-run-script "$DESTDIR/usr/bin/" \
-    && chmod +x "$DESTDIR/usr/bin/travis-run-script"
+replace_paths \
+    < common.sh \
+    > "$SHARE_DIR/common.sh"
 
-for f in common.sh backends/*.sh; do
-    sed -e 's|$(dirname $0)/|/usr/share/travis-run/|g' \
-	< "$f" \
-	> "$DESTDIR/usr/share/travis-run/$f"
+replace_paths \
+    < travis-run \
+    > "$BIN_DIR/travis-run"
+chmod +x "$BIN_DIR/travis-run"
+
+cp -R \
+    travis-run-create.sh \
+    travis-run-run.sh \
+    vm/ \
+    docker/ \
+    keys/ \
+    script/ \
+    "$SHARE_DIR"
+
+cp lib/travis-run-getopt "$LIB_DIR"
+
+for backend in backends/*.sh; do
+    cp "$backend" "$SHARE_DIR/backends"
 done

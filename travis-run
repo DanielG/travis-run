@@ -16,7 +16,9 @@
 
 ## Run .travis.yml build inside a schroot over ssh
 
-. "$(dirname "$0")/common.sh"
+export SHARE_DIR="$(dirname "$0")"
+
+. "$SHARE_DIR/common.sh"
 
 usage () {
     printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]" "$0"
@@ -147,10 +149,10 @@ else
 fi
 
 case "$COMMAND" in
-    run)    ( . "$(dirname "$0")"/travis-run-run.sh    );;
-    stop)   ( backend_end "$OPT_VM_NAME"               );;
-    create) ( . "$(dirname "$0")"/travis-run-create.sh );;
-    clean)  ( . "$(dirname "$0")"/travis-run-clean.sh  );;
+    run)    ( . "$SHARE_DIR"/travis-run-run.sh    );;
+    stop)   ( backend_end "$OPT_VM_NAME"          );;
+    create) ( . "$SHARE_DIR"/travis-run-create.sh );;
+    clean)  ( . "$SHARE_DIR"/travis-run-clean.sh  );;
     *)
 	echo "Error: unknown command \"$COMMAND\"">&2
 	echo "See \`$0 --help' for a list of valid commands"

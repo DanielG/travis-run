@@ -14,13 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 export SHARE_DIR="$(dirname "$0")"
-export BIN_DIR="$(dirname "$0")/bin"
+export LIB_DIR="$(dirname "$0")/lib"
 
-export GETOPT=$BIN_DIR/travis-run-getopt
+if getopt -T >/dev/null 2>&1; then
+    # Those silly BSDs need a proper getopt
+    export GETOPT=$LIB_DIR/travis-run-getopt
+fi
 
-# on Debian docker's executable is called docker.io
+# on Debian docker's executable is called docker.io gah ...
 if which docker.io >/dev/null; then
     alias docker=docker.io
 fi
@@ -53,7 +55,7 @@ backend_register_longopt () {
 }
 
 BACKENDS=""
-for b in $(dirname "$0")/backends/*.sh; do
+for b in $SHARE_DIR/backends/*.sh; do
     name=$(basename -s .sh "$b")
     BACKENDS="${BACKENDS} $name"
     . "$b"
