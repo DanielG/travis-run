@@ -3,10 +3,12 @@
 BIN_DIR="$DESTDIR/usr/bin"
 LIB_DIR="$DESTDIR/usr/lib/travis-run/"
 SHARE_DIR="$DESTDIR/usr/share/travis-run/"
+MAN1_DIR="$DESTDIR/usr/share/man/man1"
 
 mkdir -p "$BIN_DIR"
 mkdir -p "$SHARE_DIR/backends"
 mkdir -p "$LIB_DIR"
+mkdir -p "$MAN1_DIR"
 
 replace_paths () {
     sed -r \
@@ -31,6 +33,8 @@ cp -R \
     keys/ \
     script/ \
     "$SHARE_DIR"
+
+cp travis-run.1 "$MAN1_DIR"
 
 cp lib/travis-run-getopt "$LIB_DIR"
 

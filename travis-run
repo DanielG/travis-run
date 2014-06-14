@@ -21,13 +21,14 @@ export SHARE_DIR="$(dirname "$0")"
 . "$SHARE_DIR/common.sh"
 
 usage () {
-    printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]" "$0"
+    printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]\n" "$0"
     printf "\
-Global Options (OPTIONS):\n\
+*Global Options*\n\
 	-b, --backend=BACKEND\n\
-		Virtualization backend to use. Currently available backends:\n\
-		    %s\n\
-		(defaults to: docker)\n\
+		Virtualization backend to use. Currently available backends\n\
+		(defaults to: docker):\n\
+\n\
+%s\n\
 \n\
 	-k, --keep\n\
 		Don't stop and destroy VM after build finishes. This is useful\n\
@@ -42,45 +43,40 @@ Global Options (OPTIONS):\n\
 		details.\n\
 \n\
 \n\
-" "$(echo "$BACKENDS" | sed 's/ /, /g')"
+" "$(echo -n "$BACKENDS" | awk -v RS=" " '{ if($0) print "\t\t- " $0 }')"
 
     printf "\
-Global Backend Options (BACKEND_OPTIONS):\n\
-	None so far, see Commands for command specific backend options.\n\
+*Commands*\n\
+\n\
+run (default if no command given):\n\
+	Run the build matrix in sequence and abort on the first failure\n\
+	dropping into a shell for diagnostics by default. Note that by \n\
+	default the project directory is also synchronized with the VM running\n\
+	the build before and after the build so make sure your .travis.yml\n\
+	contains a \`clean' action before attempting the build.\n\
 \n\
 \n\
-Commands (COMMAND):\n\
-	run (default if no command given)\n\
-		Run the build matrix in sequence and abort on the first\n\
-		failure dropping into a shell for diagnostics by default. Note\n\
-		that by default the project directory is also synchronized\n\
-		with the VM running the build before and after the build so\n\
-		make sure your .travis.yml contains a \`clean' action before\n\
-		attempting the build.\n\
+stop:\n\
+	Stop running build VM. This will tear down the VM as well as\ all it's\n\
+	disk state. \n\
 \n\
 \n\
-	stop\n\
-		Stop running build VM. This will tear down the VM as well as\n\
-		all it's disk state.\n\
+create:\n\
+	Setup build VM. Depending on the backend it might be stored globally\n\
+	or in \`.travis-run' in the current directory.\n\
+\n\
+		--docker-base-image=BASE_IMAGE\n\
+			Docker image to use as the base for the container, see\n\
+			\`FROM' Dockerfile command.  (defaults to:\n\
+			ubuntu:presice)\n\
+		--docker-build-stage=STAGE\n\
+			Stage of the image build to run, (one of: base,\n\
+			script, language, project)\n\
 \n\
 \n\
-	create\n\
-		Setup build VM. Depending on the backend it might be stored\n\
-		globally or in \`.travis-run' in the current directory.\n\
-		Backend Options for \`docker':\n\
-			--docker-base-image=BASE_IMAGE\n\
-				Docker image to use as the base for the\n\
-				container, see \`FROM' Dockerfile command.\n\
-				(defaults to: ubuntu:presice)\n\
-			--docker-build-stage=STAGE\n\
-				Stage of the image build to run, (one of:\n\
-				  base, script, language, project)\n\
-\n\
-\n\
-	clean
-		Stop running build VM, and clean any backend specific state\n\
-		kept in the project directory.\n\
-\n\
+clean:
+	Stop running build VM, and clean any backend specific state kept in\n\
+	the project directory.\n\
 "
 
 
