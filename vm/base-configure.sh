@@ -43,5 +43,3 @@ cat /root/travis-run.pub >> /home/"$USER_"/.ssh/authorized_keys
 
 echo 'Defaults !authenticate' > /etc/sudoers.d/noauth
 chmod 0440 /etc/sudoers.d/noauth
-
-echo '{ "travis_build_environment": { "user": "'"$USER_"'", "group": "'"$USER_"'", "home": "/home/'"$USER_"'/" }' > /root/travis.json

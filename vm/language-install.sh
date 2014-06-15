@@ -15,6 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 LANGUAGE=$1; shift
+USER_=$1; shift
+
+if [ ! "$LANGUAGE" ] || [ ! "$USER_" ]; then
+    echo "Usage: $0 LANGUAGE USER">&2
+    exit 1
+fi
+
+# Use https://github.com/travis-ci/travis-images/tree/master/templates as a
+# reference for runlists for other languages.
+
+printf '{
+    "travis_build_environment": {
+        "user": "'"$USER_"'",
+        "group": "'"$USER_"'",
+        "home": "/home/'"$USER_"'/"
+    }' > travis.json
 
 case "$LANGUAGE" in
     haskell) RUNLIST="-o haskell::multi,sweeper" ;;
@@ -23,5 +39,7 @@ case "$LANGUAGE" in
 	RUNLIST="$LANGUAGE"
 	;;
 esac
+
+printf '}' >> travis.json
 
 chef-solo --node-name $(hostname) -j travis.json $RUNLIST
