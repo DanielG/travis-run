@@ -10,14 +10,6 @@ apt-get install \
 
 gem install --no-ri --no-rdoc chef
 
-(
-    cd /root/script
-    mkdir gems
-    export GEM_HOME=$PWD/gems
-    export GEM_PATH=$PWD/gems
-    bundle install
-)
-
 wget -O - https://github.com/travis-ci/travis-cookbooks/archive/master.tar.gz | tar -xz
 mkdir -p /var/chef/cookbooks
 cp -a travis-cookbooks-master/ci_environment/* /var/chef/cookbooks
