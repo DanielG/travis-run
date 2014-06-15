@@ -116,11 +116,15 @@ docker_init () {
     docker_check_state_dir "$VM_NAME"
 
     DOCKER_IMG_ID=$(cat ".travis-run/$VM_NAME/docker-image-id")
+
+    echo -n "docker: Starting container..."
     DOCKER_ID=$(docker run -d -p 127.0.0.1::22 "$DOCKER_IMG_ID")
 
     if [ ! "$DOCKER_ID" ]; then
-	echo "Creating docker container failed!">&2
+	echo "failed!">&2
 	exit 1
+    else
+	echo "done">&2
     fi
 
     echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-container-id"
@@ -135,13 +139,19 @@ docker_end () {
     docker_check_state_dir "$VM_NAME"
 
     if [ ! -f ".travis-run/$VM_NAME/docker-container-id" ]; then
-	return
+	echo "docker: .travis-run/$VM_NAME/docker-container-id not found."
+	exit 1
     fi
 
     DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
+    echo -n "docker: Stopping container...">&2
     docker stop "$DOCKER_ID" >/dev/null
+    echo -n "done">&2
+
+    echo -n "docker: Removing container...">&2
     docker rm "$DOCKER_ID" >/dev/null
+    echo "done">&2
 
     rm ".travis-run/$VM_NAME/docker-container-id"
 }
