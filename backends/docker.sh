@@ -179,6 +179,12 @@ docker_run () {
 
     docker_check_state_dir "$VM_NAME"
 
+    if [ ! -e ~/.travis-run/travis-run_id_rsa ]; then
+	cp $SHARE_DIR/keys/travis-run_id_rsa     ~/.travis-run/
+	cp $SHARE_DIR/keys/travis-run_id_rsa.pub ~/.travis-run/
+	chmod 600 ~/.travis-run/travis-run_id_rsa
+    fi
+
     DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
     local dir=$PWD addr ip port SSH
@@ -186,7 +192,7 @@ docker_run () {
     ip=$(echo "$addr" | sed 's/:.*//')
     port=$(echo "$addr" | sed 's/.*://')
 
-    SSH="ssh -q travis@$ip -p $port -i $SHARE_DIR/keys/travis-run -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
+    SSH="ssh -q travis@$ip -p $port -i $HOME/.travis-run/travis-run_id_rsa -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
 
     if [ x"$CPY" = x"copy" ]; then
 	$SSH -nT -- mkdir -p build/
