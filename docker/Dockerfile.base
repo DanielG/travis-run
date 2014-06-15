@@ -3,14 +3,15 @@
 ## .travis-run/$VM_NAME in your project directory instead.
 FROM $OPT_FROM
 
-WORKDIR /root
-CMD /usr/sbin/sshd -D
-EXPOSE 22
+RUN apt-get update && apt-get install -y openssh-server; mkdir /var/run/sshd
 
 ADD base-install.sh     /root/
 ADD base-configure.sh   /root/
 ADD travis-run.pub      /root/
 
-RUN sh -x /root/base-install.sh
-RUN sh -x /root/base-configure.sh travis
-RUN apt-get install -y openssh-server; mkdir /var/run/sshd
+RUN /root/base-install.sh
+RUN /root/base-configure.sh travis
+
+WORKDIR /root
+CMD /usr/sbin/sshd -D
+EXPOSE 22

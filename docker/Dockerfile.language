@@ -9,4 +9,4 @@ EXPOSE 22
 
 ADD language-install.sh /root/
 
-RUN sh -x /root/language-install.sh $OPT_LANGUAGE
+RUN /root/language-install.sh $OPT_LANGUAGE travis
