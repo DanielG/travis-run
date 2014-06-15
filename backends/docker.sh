@@ -38,14 +38,31 @@ docker_create () {
 	exit 1
     fi
 
+    echo "Creating build-script image">&2
+    (
+	[ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && exit
+
+	mkdir -p ~/.travis-run/"${VM_NAME}_script"
+	rm -rf ~/.travis-run/"${VM_NAME}_script"/script
+	cp -rp "$SHARE_DIR/script"              ~/.travis-run/"${VM_NAME}_script"
+	cp -p "$SHARE_DIR/keys/travis-run.pub"  ~/.travis-run/"${VM_NAME}_script"
+
+	sed "s/\$FROM/${VM_NAME}_base"'/' \
+	    < "$SHARE_DIR/docker/Dockerfile.script" \
+	    > ~/.travis-run/"${VM_NAME}_script"/Dockerfile
+
+	docker build -t "${VM_NAME}_script" ~/.travis-run/"${VM_NAME}_script"
+
+    )
+
     echo "Creating base image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_base"
-	cp "$SHARE_DIR/vm/base-install.sh"     ~/.travis-run/"${VM_NAME}_base"
-	cp "$SHARE_DIR/vm/base-configure.sh"   ~/.travis-run/"${VM_NAME}_base"
-	cp "$SHARE_DIR/keys/travis-run.pub"    ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/vm/base-install.sh"     ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/vm/base-configure.sh"   ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/keys/travis-run.pub"    ~/.travis-run/"${VM_NAME}_base"
 
 	sed "s/\$OPT_FROM/$OPT_FROM"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.base" \
@@ -55,28 +72,12 @@ docker_create () {
 	    ~/.travis-run/"${VM_NAME}_base"
     )
 
-    echo "Creating build-script image"
-    (
-	[ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && exit
-
-	mkdir -p ~/.travis-run/"${VM_NAME}_script"
-	rm -rf ~/.travis-run/"${VM_NAME}_script"/script
-	cp -a "$SHARE_DIR/script"            ~/.travis-run/"${VM_NAME}_script"
-	cp "$SHARE_DIR/keys/travis-run.pub"  ~/.travis-run/"${VM_NAME}_script"
-
-	sed "s/\$FROM/${VM_NAME}_base"'/' \
-	    < "$SHARE_DIR/docker/Dockerfile.script" \
-	    > ~/.travis-run/"${VM_NAME}_script"/Dockerfile
-
-	docker build -t "${VM_NAME}_script" ~/.travis-run/"${VM_NAME}_script"
-    )
-
     echo "Creating language image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && exit
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"
-	cp "$SHARE_DIR/vm/language-install.sh" \
+	cp -p "$SHARE_DIR/vm/language-install.sh" \
 	    ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"
 
 	sed "s/\$FROM/${VM_NAME}_base"'/' \
