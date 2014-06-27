@@ -1,3 +1,9 @@
+travis-run (0.1.2) unstable; urgency=medium
+
+  * New Release.
+
+ -- Daniel Gröber <dxld@darkboxed.org>  Fri, 27 Jun 2014 22:20:30 +0200
+
 travis-run (0.1) unstable; urgency=low
 
   * Initial Release.
