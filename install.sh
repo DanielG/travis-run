@@ -1,9 +1,10 @@
 #!/bin/sh
 
-BIN_DIR="/usr/bin"
-LIB_DIR="/usr/lib/travis-run/"
-SHARE_DIR="/usr/share/travis-run/"
-MAN1_DIR="/usr/share/man/man1"
+PREFIX=${PREFIX:-"/usr"}
+BIN_DIR=${BIN_DIR:-"$PREFIX/bin"}
+LIB_DIR=${LIB_DIR:-"$PREFIX/lib/travis-run/"}
+SHARE_DIR=${SHARE_DIR:-"$PREFIX/share/travis-run/"}
+MAN1_DIR=${MAN1_DIR:-"$PREFIX/share/man/man1"}
 
 mkdir -p "$DESTDIR/$BIN_DIR"
 mkdir -p "$DESTDIR/$SHARE_DIR/backends"
