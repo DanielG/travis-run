@@ -61,9 +61,10 @@ docker_create () {
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_base"
-	cp -p "$SHARE_DIR/vm/base-install.sh"     ~/.travis-run/"${VM_NAME}_base"
-	cp -p "$SHARE_DIR/vm/base-configure.sh"   ~/.travis-run/"${VM_NAME}_base"
-	cp -p "$SHARE_DIR/keys/travis-run.pub"    ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/vm/base-install.sh"   ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/vm/base-configure.sh" ~/.travis-run/"${VM_NAME}_base"
+	cp -p "$SHARE_DIR/keys/travis-run_id_rsa.pub" \
+	    ~/.travis-run/"${VM_NAME}_base"
 
 	sed "s/\$OPT_FROM/$OPT_FROM"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.base" \
@@ -119,17 +120,54 @@ docker_init () {
 
     DOCKER_IMG_ID=$(cat ".travis-run/$VM_NAME/docker-image-id")
 
-    echo -n "docker: Starting container..."
-    DOCKER_ID=$(docker run -d -p 127.0.0.1::22 "$DOCKER_IMG_ID")
+    while true; do
+	if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
+	    debug "docker: try running container"
+	    DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
-    if [ ! "$DOCKER_ID" ]; then
-	echo "failed!">&2
+	    local inspect running
+	    inspect=$(docker inspect "$DOCKER_ID")
+	    if [ $? -eq 0 ]; then
+		if [ "$(printf '%s' "$inspect" \
+                      | grep '"Running":[[:space:]]false'))" ]; then
+
+		    info "docker: using running container $DOCKER_ID"
+		    break
+		elif [ "$running" ]; then
+		    do_done "docker: Starting existing container" \
+			docker start "$DOCKER_ID"
+		    break
+		fi
+		break
+	    fi
+
+	    debug "docker: nope, remove stale docker-container-id file"
+	    rm ".travis-run/$VM_NAME/docker-container-id"
+	    continue
+	else
+	    do_done "docker: Starting container from image $DOCKER_IMG_ID" \
+		'DOCKER_ID=$(docker run -d -p 127.0.0.1::22 "$DOCKER_IMG_ID")'
+
+	    echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-container-id"
+
+	    break
+	fi
+    done
+
+    local dir=$PWD addr ip port SSH
+    addr=$(docker port "$DOCKER_ID" 22)
+    if [ $? -ne 0 ]; then
+	error "docker: getting port failed."
 	exit 1
-    else
-	echo "done">&2
     fi
 
-    echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-container-id"
+    ip=$(echo "$addr" | sed 's/:.*//')
+    port=$(echo "$addr" | sed 's/.*://')
+
+    DOCKER_SSH="ssh -q travis@$ip -p $port -i $HOME/.travis-run/travis-run_id_rsa -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
+
+    do_done "docker: Waiting for ssh to come up (this takes a while)" \
+	retry 3 $DOCKER_SSH -- echo hai >/dev/null
 }
 
 docker_end () {
@@ -179,28 +217,29 @@ docker_run () {
 
     docker_check_state_dir "$VM_NAME"
 
+    if [ ! -f ".travis-run/$VM_NAME/docker-image-id" ]; then
+	error "travis-run: Can't get docker image id.">&2
+	error >&2
+	error "Have you run \`travis-run create' yet?">&2
+	exit 1
+    fi
+
     if [ ! -e ~/.travis-run/travis-run_id_rsa ]; then
 	cp $SHARE_DIR/keys/travis-run_id_rsa     ~/.travis-run/
 	cp $SHARE_DIR/keys/travis-run_id_rsa.pub ~/.travis-run/
 	chmod 600 ~/.travis-run/travis-run_id_rsa
     fi
 
-    DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
-
-    local dir=$PWD addr ip port SSH
-    addr=$(docker port "$DOCKER_ID" 22)
-    ip=$(echo "$addr" | sed 's/:.*//')
-    port=$(echo "$addr" | sed 's/.*://')
-
-    SSH="ssh -q travis@$ip -p $port -i $HOME/.travis-run/travis-run_id_rsa -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
-
     if [ x"$CPY" = x"copy" ]; then
-	$SSH -nT -- mkdir -p build/
+	$DOCKER_SSH -nT -- rm -rf 'build/'
+	$DOCKER_SSH -nT -- mkdir -p build/
 
-	git ls-files -X .gitignore --exclude-standard -oc -z \
-	    | tar -C "$dir" -c --null -T - \
-	    | $SSH -T -- tar -C build -x
+	do_done "docker: Copying into container" \
+	    \( git ls-files -X .gitignore \
+	        --exclude-standard --others --cached -z \
+	    \| tar -c --null -T - \
+	    \| $DOCKER_SSH -T -- tar -C build -x \)
     fi
 
-    $SSH -- "$@"
+    $DOCKER_SSH -- "$@"
 }
