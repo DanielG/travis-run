@@ -57,8 +57,8 @@ run [BUILD_ID | BUILD_CONFIG]:\n\
 \n\
 \n\
 stop:\n\
-	Stop running build VM. This will tear down the VM as well as\ all it's\n\
-	disk state. \n\
+	Stop running build VM. This will tear down the VM as well as all it's\n\
+	disk state.\n\
 \n\
 \n\
 create:\n\

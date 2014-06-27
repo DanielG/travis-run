@@ -100,8 +100,8 @@ COMMANDS
               going on.
 
    stop:
-              Stop  running  build  VM. This will tear down the VM as well as\
-              all it's disk state.
+              Stop running build VM. This will tear down the VM as well as all
+              it's disk state.
 
    create:
               Setup build VM. Depending on the  backend  it  might  be  stored
