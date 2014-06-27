@@ -3,10 +3,10 @@ backend_register_longopt "docker-build-stage:"
 
 docker_check_state_dir () {
     if [ ! -d ".travis-run/$VM_NAME" ]; then
-	echo "travis-run: Can't find state dir: ">&2
-	echo "    $PWD/.travis-run/$VM_NAME">&2
-	echo >&2
-	echo "Have you run \`travis-run create' yet?">&2
+	error "travis-run: Can't find state dir:">&2
+	error "    $PWD/.travis-run/$VM_NAME">&2
+	error >&2
+	error "Have you run \`travis-run create' yet?">&2
 	exit 1
     fi
 }
@@ -25,7 +25,7 @@ docker_create () {
             --docker-build-stage) OPT_STAGE=$2;    shift; shift ;;
 
             --) shift; break ;;
-            *) echo "Error parsing argument: $1">&2; exit 1 ;;
+            *) error "Error parsing argument: $1">&2; exit 1 ;;
 	esac
     done
 
@@ -34,18 +34,19 @@ docker_create () {
     OPT_FROM=${OPT_FROM:-ubuntu:precise}
 
     if [ ! "$OPT_LANGUAGE" ]; then
-	echo "Usage: docker_create VM_NAME LANGUAGE [DOCKER_OPTIONS..]">&2
+	error "Usage: docker_create VM_NAME LANGUAGE [DOCKER_OPTIONS..]">&2
 	exit 1
     fi
 
-    echo "Creating build-script image">&2
+    info "Creating build-script image">&2
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && exit
 
 	mkdir -p ~/.travis-run/"${VM_NAME}_script"
 	rm -rf ~/.travis-run/"${VM_NAME}_script"/script
 	cp -rp "$SHARE_DIR/script"              ~/.travis-run/"${VM_NAME}_script"
-	cp -p "$SHARE_DIR/keys/travis-run.pub"  ~/.travis-run/"${VM_NAME}_script"
+	cp -p "$SHARE_DIR/keys/travis-run_id_rsa.pub" \
+	    ~/.travis-run/"${VM_NAME}_script"
 
 	sed "s/\$FROM/${VM_NAME}_base"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.script" \
@@ -55,7 +56,7 @@ docker_create () {
 
     )
 
-    echo "Creating base image"
+    info "Creating base image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
 
@@ -72,7 +73,7 @@ docker_create () {
 	    ~/.travis-run/"${VM_NAME}_base"
     )
 
-    echo "Creating language image"
+    info "Creating language image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && exit
 
@@ -90,7 +91,7 @@ docker_create () {
 	    ~/.travis-run/"${VM_NAME}_$OPT_LANGUAGE"
     )
 
-    echo "Creating per-project image"
+    info "Creating per-project image"
     (
 	[ "$OPT_STAGE" -a "$OPT_STAGE" != "project" ] && exit
 
@@ -140,21 +141,19 @@ docker_end () {
     docker_check_state_dir "$VM_NAME"
 
     if [ ! -f ".travis-run/$VM_NAME/docker-container-id" ]; then
-	echo "docker: .travis-run/$VM_NAME/docker-container-id not found."
+	error "docker: .travis-run/$VM_NAME/docker-container-id not found."
 	exit 1
     fi
 
     DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
-    echo -n "docker: Stopping container...">&2
-    docker stop "$DOCKER_ID" >/dev/null
-    echo -n "done">&2
+    do_done "docker: Stopping container $DOCKER_ID"\
+	docker stop "$DOCKER_ID" >/dev/null
 
-    echo -n "docker: Removing container...">&2
-    docker rm "$DOCKER_ID" >/dev/null
-    echo "done">&2
+    do_done "docker: Removing container $DOCKER_ID" \
+	docker rm "$DOCKER_ID" >/dev/null
 
-    rm ".travis-run/$VM_NAME/docker-container-id"
+    rm -f ".travis-run/$VM_NAME/docker-container-id"
 }
 
 ## Usage: docker_run_script VM_NAME [OPTIONS..]
@@ -162,12 +161,13 @@ docker_run_script () {
     local VM_NAME
     VM_NAME=$1; shift
 
-    docker run --rm=true -i "${VM_NAME}_script" "$@"
+    do_done "docker: Generating build script" \
+	docker run --rm -i "${VM_NAME}_script" "$@"
 }
 
 ## Usage: docker_run VM_NAME COPY? [OPTIONS..] -- COMMAND
 docker_run () {
-    local OPTS VM_NAME CPY DIR DOCKER_ID
+    local OPTS VM_NAME CPY DOCKER_ID
 
     OPTS=$($GETOPT -o "" -n "$(basename "$0")" -- "$@")
     eval set -- "$OPTS"

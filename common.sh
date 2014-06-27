@@ -28,6 +28,8 @@ if which docker.io >/dev/null; then
     alias docker=docker.io
 fi
 
+QUIET=0
+
 ################################################################################
 # Utilities
 
@@ -42,6 +44,56 @@ head () {
 
 tail () {
     sed -r 's/^[^[:space:]]+[[:space:]]*//'
+}
+
+info () {
+    if [ "$QUIET" -lt 2 ]; then
+	echo "$@" >&2
+    fi
+}
+
+debug () {
+    if [ "$DEBUG" ]; then
+	echo "$@" >&2
+    fi
+}
+
+
+error () {
+    echo "$@" >&2
+}
+
+do_done () {
+    [ "$QUIET" -lt 2 ] && echo -n "$1..." >&2 ; shift
+    eval "$@"
+    if [ $? != 0 ]; then
+	[ "$QUIET" -lt 2 ] && echo "failed!" >&2
+	exit 1
+    else
+	[ "$QUIET" -lt 2 ] && echo "done" >&2
+    fi
+}
+
+# retry COUNT COMMAND [ARGS...]
+retry () {
+    count=$1; shift
+
+    local rv
+
+    while [ "$count" -gt 0 ]; do
+	"$@"
+
+	rv=$?
+	if [ $rv -ne 0 ]; then
+	    count=$(($count - 1))
+	else
+	    break
+	fi
+
+	sleep 0.1
+    done
+
+    return $rv
 }
 
 ################################################################################
