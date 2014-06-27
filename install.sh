@@ -12,9 +12,9 @@ mkdir -p "$DESTDIR/$LIB_DIR"
 mkdir -p "$DESTDIR/$MAN1_DIR"
 
 replace_paths () {
-    sed -r \
-	-e 's|(export SHARE_DIR)=.*$|\1='"$SHARE_DIR"'|' \
-	-e 's|(export LIB_DIR)=.*$|\1='"$LIB_DIR"'|'
+    sed \
+	-e 's|\(export SHARE_DIR\)=.*$|\1='"$SHARE_DIR"'|' \
+	-e 's|\(export LIB_DIR\)=.*$|\1='"$LIB_DIR"'|'
 }
 
 replace_paths \
