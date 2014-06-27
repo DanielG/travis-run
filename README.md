@@ -92,33 +92,37 @@ GLOBAL OPTIONS
               VM referenced by name, see backend documentation for details.
 
 COMMANDS
-   run (default if no command given):
-              Run  the build matrix in sequence and abort on the first failure
-              dropping into a shell for diagnostics by default. Note  that  by
-              default  the  project directory is also synchronized with the VM
-              running the build before and after the build so make  sure  your
-              .travis.yml  contains  a  `clean'  action  before attempting the
-              build.
+   run [BUILD_ID | BUILD_CONFIG]:
+              (default  if  no command given) Run the build matrix in sequence
+              and abort on the first failure or run the  given  BUILD_ID  (see
+              the  `matrix'  command).  On  failure you will be dropped into a
+              shell inside the build environment so you can figure out  what's
+              going on.
 
    stop:
-              Stop running build VM. This will tear down the VM  as  well  as\
+              Stop  running  build  VM. This will tear down the VM as well as\
               all it's disk state.
 
    create:
-              Setup  build  VM.  Depending  on  the backend it might be stored
+              Setup build VM. Depending on the  backend  it  might  be  stored
               globally or in `.travis-run' in the current directory.
 
        --docker-base-image=BASE_IMAGE
-              Docker image to use as the base for the  container,  see  `FROM'
+              Docker  image  to  use as the base for the container, see `FROM'
               Dockerfile command.  (defaults to: ubuntu:presice)
 
        --docker-build-stage=STAGE
-              Stage  of  the  image  build to run, (one of: base, script, lan‐
+              Stage of the image build to run, (one  of:  base,  script,  lan‐
               guage, project)
 
    clean:
               Stop running build VM, and clean any backend specific state kept
               in the project directory.
+
+   matrix:
+              Print the build matrix. The number in the first  column  is  the
+              BUILD_ID.  The part after the ':' is the BUILD_CONFIG, note that
+              this is whitespace sensitive.
 
 
 
