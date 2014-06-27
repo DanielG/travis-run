@@ -148,7 +148,7 @@ case "$COMMAND" in
     run)    ( . "$SHARE_DIR"/travis-run-run.sh    );;
     stop)   ( backend_end "$OPT_VM_NAME"          );;
     create) ( . "$SHARE_DIR"/travis-run-create.sh );;
-    clean)  ( . "$SHARE_DIR"/travis-run-clean.sh  );;
+    clean)  ( backend_clean "$OPT_VM_NAME"        );;
     *)
 	echo "Error: unknown command \"$COMMAND\"">&2
 	echo "See \`$0 --help' for a list of valid commands"

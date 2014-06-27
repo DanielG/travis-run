@@ -112,6 +112,15 @@ docker_create () {
     )
 }
 
+docker_clean () {
+    local VM_NAME=$1; shift
+
+    if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
+	docker_end "$VM_NAME"
+	rm -f ".travis-run/$VM_NAME/docker-image-id"
+    fi
+}
+
 docker_init () {
     local VM_NAME DOCKER_IMG_ID DOCKER_ID
     VM_NAME=$1; shift
