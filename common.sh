@@ -23,6 +23,13 @@ else
     export GETOPT=getopt
 fi
 
+
+if which stdbuf >/dev/null 2>&1; then
+    STDBUF="stdbuf -i0 -o0 --"
+else
+    unset STBUF
+fi
+
 # on Debian docker's executable is called docker.io gah ...
 if which docker.io >/dev/null; then
     alias docker=docker.io

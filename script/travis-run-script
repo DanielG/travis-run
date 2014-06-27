@@ -29,6 +29,13 @@ require 'travis/testing/factories'
 require 'yaml'
 require 'active_support/core_ext/hash'
 
+
+# from travis-core/lib/travis/model/build/config/matrix.rb
+def permutations(base, result = [])
+  base = base.dup
+  base.empty? ? [result] : base.shift.map { |value| permutations(base, result + [value]) }.flatten(1)
+end
+
 def configs(yml)
   begin
     payload = YAML.load(yml)
@@ -38,15 +45,48 @@ def configs(yml)
     $stderr.puts yml
     exit 1
   end
+  # Normalize build configuration
   config = payload.respond_to?(:to_hash) ? payload.to_hash : {}
+  bcfg = Build::Config.new(config, :multi_os => false)
+  normalized_cfg = bcfg.normalize
 
-  normalized_cfg = Build::Config.new(config, :multi_os => false).normalize
+  matrix = Build::Config::Matrix.new(normalized_cfg, :multi_os => false)
 
-  builds = Build::Config::Matrix.new(normalized_cfg, :multi_os => false).expand
+  # Get final configuration for build matrix elements
+  builds = matrix.expand
+
+  # Get The varying keys in the build matrix for use as a human readable label
+  # TODO: fix matrix.exclude
+  mkeys = Build::Config.matrix_keys_for(config, :multi_os => false)
+
+  mkeys.reject! { |k|
+    !(    normalized_cfg.has_key?(k) \
+      && !normalized_cfg[k].nil?     \
+      && !normalized_cfg[k].empty?
+     )
+  }
+
+  dims = mkeys.map do |key|
+    normalized_cfg[key]
+  end
+
+  build_keys = permutations(dims)
+  labels = build_keys.map do |bk|
+    x = []
+    mkeys.each_index do |imk|
+      mk = mkeys[imk]
+
+      x << "#{mk}: #{bk[imk]}"
+    end
+
+    x.join ", "
+  end
 
   str = ""
-  builds.each do |cfg|
-    str += YAML.dump(cfg).gsub("\n", '\n') + "\n"
+  builds.each_index do |i|
+    c = YAML.dump(builds[i]).gsub("\n", '\n')
+    str += "label='" + labels[i] + "'; "
+    str += "cfg='" + c.gsub("'", '\'\\\\\'\'') + "'\n"
   end
 
   str
