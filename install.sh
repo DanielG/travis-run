@@ -29,10 +29,10 @@ chmod +x "$DESTDIR/$BIN_DIR/travis-run"
 cp -R \
     travis-run-create.sh \
     travis-run-run.sh \
-    vm/ \
-    docker/ \
-    keys/ \
-    script/ \
+    vm \
+    docker \
+    keys \
+    script \
     "$DESTDIR/$SHARE_DIR"
 
 cp travis-run.1 "$DESTDIR/$MAN1_DIR"
