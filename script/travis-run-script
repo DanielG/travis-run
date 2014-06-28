@@ -33,7 +33,16 @@ require 'active_support/core_ext/hash'
 # from travis-core/lib/travis/model/build/config/matrix.rb
 def permutations(base, result = [])
   base = base.dup
-  base.empty? ? [result] : base.shift.map { |value| permutations(base, result + [value]) }.flatten(1)
+  if base.empty?
+    [result]
+  else
+    first = base.shift
+    if first.respond_to? :map
+      first.map { |value| permutations(base, result + [value]) }.flatten(1)
+    else
+      permutations(base, result + [first])
+    end
+  end
 end
 
 def configs(yml)
