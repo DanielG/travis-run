@@ -2,6 +2,13 @@ backend_register_longopt "docker-base-image:"
 backend_register_longopt "docker-build-stage:"
 backend_register_longopt "docker-no-pull"
 
+if [ x"$(uname)" = x"Darwin" ]; then
+    debug "docker: Running on Darwin, using boot2docker."
+    BOOT2DOCKER=1
+else
+    unset BOOT2DOCKER
+fi
+
 docker_check_state_dir () {
     if [ ! -d ".travis-run/$VM_NAME" ]; then
 	error "travis-run: Can't find state dir:">&2
@@ -245,13 +252,33 @@ docker_init () {
     ip=$(echo "$addr" | sed 's/:.*//')
     port=$(echo "$addr" | sed 's/.*://')
 
+    # TODO: when the boot2docker VM's interface works
+    # if [ "$BOOT2DOCKER" ]; then
+    # 	ip=$(boot2docker ip 2>/dev/null)
+
+    # 	if [ $? -ne 0 ]; then
+    # 	    error "docker: Couldn't get boot2docker VM ip address."
+    # 	    exit 1
+    # 	fi
+    # fi
+
     if [ ! -e ~/.travis-run/travis-run_id_rsa ]; then
 	cp $SHARE_DIR/keys/travis-run_id_rsa     ~/.travis-run/
 	cp $SHARE_DIR/keys/travis-run_id_rsa.pub ~/.travis-run/
 	chmod 600 ~/.travis-run/travis-run_id_rsa
     fi
 
-    DOCKER_SSH="ssh -q travis@$ip -p $port -i $HOME/.travis-run/travis-run_id_rsa -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
+    DOCKER_SSH="ssh -q travis@$ip -p $port  -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
+
+    local b2d_ssh
+    if [ "$BOOT2DOCKER" ]; then
+	DOCKER_SSH="boot2docker ssh $DOCKER_SSH -i travis-run_id_rsa"
+
+	boot2docker ssh "cat > ~/travis-run_id_rsa; chmod 600 travis-run_id_rsa"\
+	    < $HOME/.travis-run/travis-run_id_rsa
+    else
+	DOCKER_SSH="$DOCKER_SSH -i $HOME/.travis-run/travis-run_id_rsa"
+    fi
 
     do_done "docker: Waiting for ssh to come up (this takes a while)" \
 	retry 3 $DOCKER_SSH -- echo hai >/dev/null
