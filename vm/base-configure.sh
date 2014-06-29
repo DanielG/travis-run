@@ -39,7 +39,7 @@ chmod 755 /home/"$USER_"
 mkdir /home/"$USER_"/.ssh
 chmod 700 /home/"$USER_"/.ssh
 chown -R "$USER_":"$USER_"  /home/"$USER_"/.ssh
-cat /root/travis-run.pub >> /home/"$USER_"/.ssh/authorized_keys
+cat /root/travis-run_id_rsa.pub >> /home/"$USER_"/.ssh/authorized_keys
 
 echo 'Defaults !authenticate' > /etc/sudoers.d/noauth
 chmod 0440 /etc/sudoers.d/noauth
