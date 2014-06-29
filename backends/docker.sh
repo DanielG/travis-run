@@ -1,5 +1,6 @@
 backend_register_longopt "docker-base-image:"
 backend_register_longopt "docker-build-stage:"
+backend_register_longopt "docker-no-pull"
 
 docker_check_state_dir () {
     if [ ! -d ".travis-run/$VM_NAME" ]; then
