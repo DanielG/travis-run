@@ -37,10 +37,9 @@ usage () {
 		\`travis-run stop' after you're done with the VM.\n\
 \n\
 	-n, --vm-name=VM_NAME\n\
-		Arbitrary identifier associated with the build VM. (defaults\n\
-		to: travis-run-vm). The backend may support persistent options\n\
-		per VM referenced by name, see backend documentation for\n\
-		details.\n\
+		Backend specific identifier associated with the VM. For the\n\
+		docker backend this is the repository name for the images to\n\
+		use. (defaults to \`dxld/travis-run' for docker backend)
 \n\
 \n\
 " "$(echo -n "$BACKENDS" | awk -v RS=" " '{ if($0) print "\t\t- " $0 }')"
@@ -72,6 +71,9 @@ create:\n\
 		--docker-build-stage=STAGE\n\
 			Stage of the image build to run, (one of: base,\n\
 			script, language, project)\n\
+		--docker-no-pull\n\
+			Build all docker containers from scratch, don't try to\n\
+			pull them from the docker hub.
 \n\
 \n\
 clean:
@@ -139,8 +141,11 @@ done
 ## Global Options
 
 OPT_KEEP=$OPT_KEEP # OPT_KEEP unset by default
-OPT_VM_NAME=${OPT_VM_NAME:-travis-run-amd64}
 OPT_BACKEND=${OPT_BACKEND:-docker}
+
+case "$OPT_BACKEND" in
+    docker) OPT_VM_NAME=${OPT_VM_NAME:-dxld/travis-run} ;;
+esac
 
 ## Commands
 

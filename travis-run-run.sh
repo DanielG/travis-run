@@ -31,9 +31,8 @@ if [ "$1" ]; then
     exit 1
 fi
 
-
 init () {
-    [ ! "$INITIALIZED" ] && exit
+    [ "$INITIALIZED" ] && exit
 
     INITIALIZED=1
 
@@ -46,7 +45,7 @@ init () {
 
     if [ ! "$OPT_KEEP" ]; then
 	# Stop VM in background on SIGINT
-	trap 'CANCELLED=1; backend_end '"$OPT_VM_NAME"'' 2
+	trap 'CANCELLED=1; echo; backend_end '"$OPT_VM_NAME"'' 2
 
 	# exit
 	trap '[ $? != 0 ] && [ ! "$CANCELLED" ] && backend_end '"$OPT_VM_NAME" 0
