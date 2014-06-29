@@ -87,6 +87,12 @@ run_tests () {
     echo "Build Succeeded :)\n\n\n" >&2
 }
 
+if [ $OPT_SHELL ]; then
+    init
+    backend_run "$OPT_VM_NAME" copy -- true
+    backend_run "$OPT_VM_NAME" nocopy
+    exit
+fi
 cfgs=$(backend_run_script "$OPT_VM_NAME" < .travis.yml)
 
 id=0
