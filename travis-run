@@ -117,6 +117,18 @@ eval set -- "$OPTS"
 
 BACKEND_ARGS=""
 
+takes_opt () {
+    [ $(printf '%s' "$LONGOPTS" | sed 's/,/\n/g' | grep "^$1:\$") ]
+}
+
+backend_args_append () {
+    if [ ! "$BACKEND_ARGS" ]; then
+	BACKEND_ARGS="$@"
+    else
+	BACKEND_ARGS="${BACKEND_ARGS} $@";
+    fi
+}
+
 while true; do
     case "$1" in
 	-h|--help)    usage; exit; ;;
@@ -125,12 +137,13 @@ while true; do
         -b|--backend) OPT_BACKEND=$2; shift; shift ;;
 
 	--schroot-*|--vagrant-*|--docker-*)
-	    if [ ! "$BACKEND_ARGS" ]; then
-		BACKEND_ARGS="$1=$2";
+	    if takes_opt "$1"; then
+		backend_args_append "$1 $2"
+		shift; shift
 	    else
-		BACKEND_ARGS="${BACKEND_ARGS} $1 $2";
+		backend_args_append "$1"
+		shift
 	    fi
-	    shift; shift
 	    ;;
 
         --) shift; break ;;
