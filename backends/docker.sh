@@ -138,6 +138,42 @@ docker_create () {
     )
 }
 
+docker_destroy () {
+    docker_clean "$@"
+
+    local images
+    images=$(sort < ~/.travis-run/images | uniq)
+
+    for img in $(printf '%s' "$images"); do
+	if docker_exists "$img"; then
+	    docker rmi $img
+
+	    if [ $? -ne 0 ]; then
+		local offender
+		offender=$(docker ps -a | grep "$img" | awk '{ print $1 }')
+
+		if [ -n "$offender" ]; then
+		    error "\
+docker: Removing image \`$img' failed, looks like it's in use by container\n\
+\`$offender'.\n\n\
+If you're sure that container isn't doing anything important destroy it with:\n\
+    $ docker stop $offender && docker rm $offender\n\
+and run \`$0 destroy' again."
+		else
+		    error "\
+docker: Removing image \`$img' failed, maybe some container is using it?\n\n\
+Try \`docker ps -a' to find the running container and then \`docker {stop,rm}'\n\
+to destroy the offending container."
+		fi
+		continue
+	    fi
+	fi
+	images=$(printf '%s' "$images" | grep -v "^$img\$")
+    done
+
+    printf '%s' "$images" > ~/.travis-run/images
+}
+
 docker_clean () {
     local VM_NAME VM_REPO
     VM_REPO="$1"; shift

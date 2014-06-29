@@ -161,6 +161,14 @@ backend_clean () {
 }
 
 ##
+# Stop VM and remove all state from project directory and globally
+#
+# Usage: backend_destroy VM_NAME
+backend_destroy () {
+    "${OPT_BACKEND}"_destroy "$@" "$BACKEND_ARGS"
+}
+
+##
 # Run travis-run-script in virtualized environment
 #
 ## Usage: backend_run VM_NAME [OPTIONS..]
