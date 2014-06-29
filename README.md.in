@@ -23,6 +23,7 @@ Debian
 ------
 
 ```
+# apt-get install devscripts
 $ git clone https://github.com/DanielG/travis-run.git
 $ cd travis-run
 $ debuild -uc -us
