@@ -74,17 +74,37 @@ run_tests () {
 	exit 1
     fi
 
-    printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash 2>&1  \
-	| $STDBUF sed -r 's/(\x1b\[[^m]+.*)/\1\x1b[0m/g' \
-	| $STDBUF sed -r 's/\r/\n/g' 1>&2
+    mkdir -p ".travis-run"
+    trap 'rm -f ".travis-run/stderr_fifo"' 0
+    rm -f ".travis-run/stderr_fifo" && mkfifo ".travis-run/stderr_fifo"
 
-    if [ $? -ne 0 ] && [ ! $CANCELLED ]; then
-    	echo "Build failed, please investigate." >&2
-	backend_run "$OPT_VM_NAME" nocopy
-	return 1
+
+   printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
+	2> .travis-run/stderr_fifo &
+
+    pid=$!
+
+   perl -pe '$|=1; s/(\x1b\[[^m]+.*)/\1\x1b[0m/g; s/\r/\n/g' \
+	< .travis-run/stderr_fifo 1>&2 &
+
+   wait $!
+   wait $pid
+   RV=$?
+    RV=1
+
+    if [ ! $CANCELLED ]; then
+	if [ $RV -ne 0 ]; then
+    	    error "Build failed, please investigate." >&2
+
+	    backend_run "$OPT_VM_NAME" nocopy
+	    exit 1
+	fi
+
+	info "Build Succeeded :)\n\n\n" >&2
+    else
+	debug "Build cancelled :(\n\n\n"
+	exit 1
     fi
-
-    echo "Build Succeeded :)\n\n\n" >&2
 }
 
 if [ $OPT_SHELL ]; then
