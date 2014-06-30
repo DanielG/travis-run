@@ -136,7 +136,8 @@ while true; do
     fi
 
     if [ ! "$BUILD_ID" ] \
-	|| [ x"$BUILD_ID" = x"$label" ] || [ x"$num" = x"1" -a x"$BUILD_ID" = x"$id" ]
+	|| [ x"$BUILD_ID" = x"$label" ] \
+	|| [ x"$num" = x"1" -a x"$BUILD_ID" = x"$id" ]
     then
 	init
 
