@@ -19,6 +19,10 @@ docker_check_state_dir () {
     fi
 }
 
+docker_exists () {
+    docker inspect "$@" >/dev/null 2>&1
+}
+
 docker_pull () {
     if [ "$OPT_NO_PULL" ];  then
 	return 1
@@ -209,41 +213,49 @@ docker_init () {
     while true; do
 	if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
 	    debug "docker: try running container"
-	    local DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
+	    local DOCKER_CONTAINER_ID
+            DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
 	    local inspect running
-	    inspect=$(docker inspect "$DOCKER_ID")
+	    inspect=$(docker inspect "$DOCKER_CONTAINER_ID")
 	    if [ $? -eq 0 ]; then
 		running="$(printf '%s' "$inspect" \
-                      | grep '"Running":[[:space:]]true'))"
+                      | grep '"Running":[[:space:]]true')"
 
 		if [ "$running" ]; then
-		    info "docker: using running container $DOCKER_ID"
+		    info "docker: Using running container $DOCKER_CONTAINER_ID"
 		    break
 		else
 		    do_done "docker: Starting existing container" \
-			docker start "$DOCKER_ID"
+			docker start "$DOCKER_CONTAINER_ID" >/dev/null
 		    break
 		fi
-		break
 	    fi
 
 	    debug "docker: nope, remove stale docker-container-id file"
 	    rm ".travis-run/$VM_NAME/docker-container-id"
 	    continue
 	else
+	    local listen
+	    if [ ! "$BOOT2DOCKER" ]; then
+		listen="127.0.0.1::"
+	    else
+		listen=""
+	    fi
+
 	    do_done "docker: Starting container from image $DOCKER_IMG_ID" \
-		'DOCKER_ID=$(docker run -d -p 127.0.0.1::22 \
+		'DOCKER_CONTAINER_ID=$(docker run -d -p ${listen}22 \
                                --name="$DOCKER_CONTAINER_NAME" "$DOCKER_IMG_ID")'
 
-	    echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-container-id"
+	    echo "$DOCKER_CONTAINER_ID" \
+                > ".travis-run/$VM_NAME/docker-container-id"
 
 	    break
 	fi
     done
 
-    local dir=$PWD addr ip port SSH
-    addr=$(docker port "$DOCKER_ID" 22)
+    local addr ip port
+    addr=$(docker port "$DOCKER_CONTAINER_ID" 22)
     if [ $? -ne 0 ]; then
 	error "docker: getting port failed."
 	exit 1
@@ -252,15 +264,14 @@ docker_init () {
     ip=$(echo "$addr" | sed 's/:.*//')
     port=$(echo "$addr" | sed 's/.*://')
 
-    # TODO: when the boot2docker VM's interface works
-    # if [ "$BOOT2DOCKER" ]; then
-    # 	ip=$(boot2docker ip 2>/dev/null)
+    if [ "$BOOT2DOCKER" ]; then
+    	ip=$(boot2docker ip 2>/dev/null)
 
-    # 	if [ $? -ne 0 ]; then
-    # 	    error "docker: Couldn't get boot2docker VM ip address."
-    # 	    exit 1
-    # 	fi
-    # fi
+    	if [ $? -ne 0 ]; then
+    	    error "docker: Couldn't get boot2docker VM ip address."
+    	    exit 1
+    	fi
+    fi
 
     if [ ! -e ~/.travis-run/travis-run_id_rsa ]; then
 	cp $SHARE_DIR/keys/travis-run_id_rsa     ~/.travis-run/
@@ -268,29 +279,18 @@ docker_init () {
 	chmod 600 ~/.travis-run/travis-run_id_rsa
     fi
 
-    DOCKER_SSH="ssh -q travis@$ip -p $port  -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10"
-
-    local b2d_ssh
-    if [ "$BOOT2DOCKER" ]; then
-	DOCKER_SSH="boot2docker ssh $DOCKER_SSH -i travis-run_id_rsa"
-
-	boot2docker ssh "cat > ~/travis-run_id_rsa; chmod 600 travis-run_id_rsa"\
-	    < $HOME/.travis-run/travis-run_id_rsa
-    else
-	DOCKER_SSH="$DOCKER_SSH -i $HOME/.travis-run/travis-run_id_rsa"
-    fi
+    DOCKER_SSH="ssh -q -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ControlMaster=no -i $HOME/.travis-run/travis-run_id_rsa -p $port travis@$ip"
 
     do_done "docker: Waiting for ssh to come up (this takes a while)" \
-	retry 3 $DOCKER_SSH -- echo hai >/dev/null
+	retry 3 $DOCKER_SSH -Tn -- echo hai >/dev/null
 }
 
 docker_end () {
     set -e
 
-    local VM_NAME VM_REPO DOCKER_ID
+    local VM_NAME VM_REPO
     VM_REPO="$1"; shift
     VM_NAME="$(basename "$VM_REPO")"
-
 
     docker_check_state_dir "$VM_NAME"
 
@@ -299,13 +299,14 @@ docker_end () {
 	exit 1
     fi
 
-    DOCKER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
+    local DOCKER_CONTAINER_ID
+    DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
-    do_done "docker: Stopping container $DOCKER_ID"\
-	docker stop "$DOCKER_ID" >/dev/null
+    do_done "docker: Stopping container $DOCKER_CONTAINER_ID"\
+	docker stop "$DOCKER_CONTAINER_ID" >/dev/null
 
-    do_done "docker: Removing container $DOCKER_ID" \
-	docker rm "$DOCKER_ID" >/dev/null
+    do_done "docker: Removing container $DOCKER_CONTAINER_ID" \
+	docker rm "$DOCKER_CONTAINER_ID" >/dev/null
 
     rm -f ".travis-run/$VM_NAME/docker-container-id"
 }
@@ -322,7 +323,7 @@ docker_run_script () {
 
 ## Usage: docker_run VM_NAME COPY? [OPTIONS..] -- COMMAND
 docker_run () {
-    local OPTS CPY DOCKER_ID
+    local OPTS CPY
 
     OPTS=$($GETOPT -o "" -n "$(basename "$0")" -- "$@")
     eval set -- "$OPTS"
@@ -344,13 +345,11 @@ docker_run () {
     fi
 
     if [ x"$CPY" = x"copy" ]; then
-	$DOCKER_SSH -nT -- rm -rf 'build/'
-	$DOCKER_SSH -nT -- mkdir -p build/
+	$DOCKER_SSH -nT -- "rm -rf 'build/' && mkdir -p build/"
 
 	do_done "docker: Copying into container" \
-	    \( git ls-files -X .gitignore \
-	        --exclude-standard --others --cached -z \
-	    \| tar -c --null -T - \
+	    \( git ls-files --exclude-standard --others --cached -z \
+	    \| tee logloglog \| tar -c --null -T - \
 	    \| $DOCKER_SSH -T -- tar -C build -x \)
     fi
 
