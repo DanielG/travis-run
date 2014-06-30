@@ -23,6 +23,7 @@ Debian
 ------
 
 ```
+# apt-get install devscripts
 $ git clone https://github.com/DanielG/travis-run.git
 $ cd travis-run
 $ debuild -uc -us
@@ -32,12 +33,14 @@ $ debuild -uc -us
 OS X
 ----
 
-This is currently broken, blocking on [Homebrew/homebrew#29513](https://github.com/Homebrew/homebrew/pull/29513) which in turn is
-blocking on [dotcloud/docker#6256](https://github.com/dotcloud/docker/issues/6256)
+```
+$ brew tap andy-morris/homebrew-extra
+$ brew install travis-run
+$ boot2docker init
+```
 
-```
-brew install travis-run
-```
+Before you use travis-run you have to run `boot2docker up` and export
+`DOCKER_HOST` as instructed.
 
 Usage
 =====
@@ -87,9 +90,9 @@ GLOBAL OPTIONS
 
        -n, --vm-name=VM_NAME
 
-              Arbitrary identifier associated with the build VM. (defaults to:
-              travis-run-vm). The backend may support persistent  options  per
-              VM referenced by name, see backend documentation for details.
+              Backend  specific  identifier  associated  with  the VM. For the
+              docker backend this is the repository name  for  the  images  to
+              use. (defaults to `dxld/travis-run' for docker backend)
 
 COMMANDS
    run [BUILD_ID | BUILD_CONFIG]:
@@ -98,6 +101,9 @@ COMMANDS
               the  `matrix'  command).  On  failure you will be dropped into a
               shell inside the build environment so you can figure out  what's
               going on.
+
+       --shell
+              Prepare for a build but instead of running it launch a shell.
 
    stop:
               Stop running build VM. This will tear down the VM as well as all
@@ -115,13 +121,17 @@ COMMANDS
               Stage of the image build to run, (one  of:  base,  script,  lan‐
               guage, project)
 
+       --docker-no-pull
+              Build all docker containers from scratch, don't try to pull them
+              from the docker hub.
+
    clean:
               Stop running build VM, and clean any backend specific state kept
               in the project directory.
 
    matrix:
-              Print the build matrix. The number in the first  column  is  the
-              BUILD_ID.  The part after the ':' is the BUILD_CONFIG, note that
+              Print  the  build  matrix. The number in the first column is the
+              BUILD_ID. The part after the ':' is the BUILD_CONFIG, note  that
               this is whitespace sensitive.
 
 

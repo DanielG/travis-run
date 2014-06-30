@@ -23,10 +23,9 @@ VM creation once. Make sure to `travis\-run clean' or
 .HP
 \fB\-n\fR, \fB\-\-vm\-name\fR=\fI\,VM_NAME\/\fR
 .IP
-Arbitrary identifier associated with the build VM. (defaults
-to: travis\-run\-vm). The backend may support persistent options
-per VM referenced by name, see backend documentation for
-details.
+Backend specific identifier associated with the VM. For the
+docker backend this is the repository name for the images to
+use. (defaults to `dxld/travis\-run' for docker backend)
 .SH COMMANDS
 .SS "run [BUILD_ID | BUILD_CONFIG]:"
 .IP
@@ -35,6 +34,10 @@ Run the build matrix in sequence and abort on the first failure or run
 the given BUILD_ID (see the `matrix' command). On failure you will be
 dropped into a shell inside the build environment so you can figure
 out what's going on.
+.TP
+\fB\-\-shell\fR
+Prepare for a build but instead of running it launch a
+shell.
 .SS "stop:"
 .IP
 Stop running build VM. This will tear down the VM as well as all it's
@@ -52,6 +55,10 @@ ubuntu:presice)
 \fB\-\-docker\-build\-stage\fR=\fI\,STAGE\/\fR
 Stage of the image build to run, (one of: base,
 script, language, project)
+.TP
+\fB\-\-docker\-no\-pull\fR
+Build all docker containers from scratch, don't try to
+pull them from the docker hub.
 .SS "clean:"
 .IP
 Stop running build VM, and clean any backend specific state kept in
