@@ -16,3 +16,6 @@ clean:
 
 install:
 	DESTDIR=$(DESTDIR) sh -x ./install.sh $(VERSION)
+
+push: $(wildcard docker/* vm/* keys/travis-run_id_rsa script/*)
+	sh docker-build-images.sh
