@@ -69,8 +69,12 @@ run_tests () {
     script=$(printf '%s\n' "$1" \
 	| backend_run_script "$OPT_VM_NAME" --build 2>/dev/null)
 
-    if [ $? != 0 ]; then
-    	echo "Error: Generating build script failed." >&2
+    if [ ! $CANCELLED ]; then
+	if [ $? != 0 ]; then
+    	    info "Error: Generating build script failed." >&2
+	    exit 1
+	fi
+    else
 	exit 1
     fi
 
