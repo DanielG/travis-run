@@ -109,8 +109,7 @@ run_tests () {
 
 if [ $OPT_SHELL ]; then
     init
-    backend_run "$OPT_VM_NAME" copy -- true
-    backend_run "$OPT_VM_NAME" nocopy
+    backend_run "$OPT_VM_NAME" copy
     exit
 fi
 cfgs=$(backend_run_script "$OPT_VM_NAME" < .travis.yml)
