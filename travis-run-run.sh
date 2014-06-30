@@ -116,10 +116,15 @@ if [ $OPT_SHELL ]; then
     backend_run "$OPT_VM_NAME" copy
     exit
 fi
-cfgs=$(backend_run_script "$OPT_VM_NAME" < .travis.yml)
 
+cfgs=$(backend_run_script "$OPT_VM_NAME" < .travis.yml)
 id=0
-printf '%s\n' "$cfgs" | while IFS=$(printf '\n') read -r line; do
+while true; do
+    line="$(printf '%s' "$cfgs" | sed '1q')"
+    cfgs="$(printf '%s' "$cfgs" | sed '1d')"
+
+    [ ! "$line" ] && break
+
     unset label; unset cfg
     eval $(printf '%s' "$line")
     [ ! "$cfg" ] && continue
