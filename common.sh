@@ -53,8 +53,8 @@ info () {
 }
 
 debug () {
-    if [ "$DEBUG" ]; then
-	echo "$@" >&2
+    if [ "$TRAVIS_RUN_DEBUG" ]; then
+	printf '%s\n' "$*" >&2
     fi
 }
 
