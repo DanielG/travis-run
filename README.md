@@ -74,6 +74,14 @@ SYNOPSIS
        travis-run [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]
 
 GLOBAL OPTIONS
+       -h, --help
+
+              display this help and exit
+
+       --version
+
+              Display version information and exit
+
        -b, --backend=BACKEND
 
               Virtualization  backend  to  use.  Currently  available backends

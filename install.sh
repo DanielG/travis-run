@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ ! "$1" ]; then
+    echo "Usage: install.sh VERSION">&2
+    exit 1
+fi
+
+VERSION="$1"
 PREFIX=${PREFIX:-"/usr"}
 BIN_DIR=${BIN_DIR:-"$PREFIX/bin"}
 LIB_DIR=${LIB_DIR:-"$PREFIX/lib/travis-run/"}
@@ -11,17 +17,18 @@ mkdir -p "$DESTDIR/$SHARE_DIR/backends"
 mkdir -p "$DESTDIR/$LIB_DIR"
 mkdir -p "$DESTDIR/$MAN1_DIR"
 
-replace_paths () {
+install_script () {
     sed \
 	-e 's|\(export SHARE_DIR\)=.*$|\1='"$SHARE_DIR"'|' \
-	-e 's|\(export LIB_DIR\)=.*$|\1='"$LIB_DIR"'|'
+	-e 's|\(export LIB_DIR\)=.*$|\1='"$LIB_DIR"'|' \
+	-e 's|^\(VERSION\)=.*$|\1='"$VERSION"'|'
 }
 
-replace_paths \
+install_script \
     < common.sh \
     > "$DESTDIR/$SHARE_DIR/common.sh"
 
-replace_paths \
+install_script \
     < travis-run \
     > "$DESTDIR/$BIN_DIR/travis-run"
 chmod +x "$DESTDIR/$BIN_DIR/travis-run"

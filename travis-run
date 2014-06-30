@@ -24,6 +24,12 @@ usage () {
     printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]\n" "$0"
     printf "\
 *Global Options*\n\
+	-h, --help\n\
+		display this help and exit\n\
+\n\
+	--version\n\
+		Display version information and exit
+\n\
 	-b, --backend=BACKEND\n\
 		Virtualization backend to use. Currently available backends\n\
 		(defaults to: docker):\n\
@@ -104,7 +110,7 @@ matrix:
 #				sync to work. (required)"
 }
 
-TRAVIS_GETOPT_LONG="help,keep,vm-name,backend:,shell"
+TRAVIS_GETOPT_LONG="help,version,keep,vm-name,backend:,shell"
 TRAVIS_GETOPT_SHORT="hkn:b:"
 
 if [ "$BACKEND_GETOPT_LONG" ]; then
@@ -136,6 +142,7 @@ backend_args_append () {
 while true; do
     case "$1" in
 	-h|--help)    usage; exit; ;;
+	--version)    echo "$VERSION"; exit; ;;
         -k|--keep)    OPT_KEEP=1; shift ;;
         -n|--vm-name) OPT_VM_NAME=$2; shift; shift ;;
         -b|--backend) OPT_BACKEND=$2; shift; shift ;;

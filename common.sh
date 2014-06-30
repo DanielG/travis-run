@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+VERSION=$(cd "$(dirname "$0")" && git describe || echo "(unknown)")
 export SHARE_DIR="$(dirname "$0")"
 export LIB_DIR="$(dirname "$0")/lib"
 
