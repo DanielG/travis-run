@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+VERSION=$(cd "$(dirname "$0")" && git describe || echo "(unknown)")
 export SHARE_DIR="$(dirname "$0")"
 export LIB_DIR="$(dirname "$0")/lib"
 
@@ -21,13 +22,6 @@ if getopt -T >/dev/null 2>&1; then
     export GETOPT=$LIB_DIR/travis-run-getopt
 else
     export GETOPT=getopt
-fi
-
-
-if which stdbuf >/dev/null 2>&1; then
-    STDBUF="stdbuf -i0 -o0 --"
-else
-    unset STBUF
 fi
 
 # on Debian docker's executable is called docker.io gah ...
@@ -60,8 +54,8 @@ info () {
 }
 
 debug () {
-    if [ "$DEBUG" ]; then
-	echo "$@" >&2
+    if [ "$TRAVIS_RUN_DEBUG" ]; then
+	printf '%s\n' "$*" >&2
     fi
 }
 
@@ -71,7 +65,7 @@ error () {
 }
 
 do_done () {
-    [ "$QUIET" -lt 2 ] && echo -n "$1..." >&2 ; shift
+    [ "$QUIET" -lt 2 ] && printf "$1..." >&2 ; shift
     eval "$@"
     if [ $? != 0 ]; then
 	[ "$QUIET" -lt 2 ] && echo "failed!" >&2
@@ -158,6 +152,14 @@ backend_create () {
 # Usage: backend_clean VM_NAME
 backend_clean () {
     "${OPT_BACKEND}"_clean "$@" "$BACKEND_ARGS"
+}
+
+##
+# Stop VM and remove all state from project directory and globally
+#
+# Usage: backend_destroy VM_NAME
+backend_destroy () {
+    "${OPT_BACKEND}"_destroy "$@" "$BACKEND_ARGS"
 }
 
 ##

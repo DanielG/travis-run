@@ -24,6 +24,12 @@ usage () {
     printf "Usage: %s [OPTIONS..] [BACKEND_OPTIONS..] [COMMAND [ARGS..]]\n" "$0"
     printf "\
 *Global Options*\n\
+	-h, --help\n\
+		display this help and exit\n\
+\n\
+	--version\n\
+		Display version information and exit
+\n\
 	-b, --backend=BACKEND\n\
 		Virtualization backend to use. Currently available backends\n\
 		(defaults to: docker):\n\
@@ -37,10 +43,9 @@ usage () {
 		\`travis-run stop' after you're done with the VM.\n\
 \n\
 	-n, --vm-name=VM_NAME\n\
-		Arbitrary identifier associated with the build VM. (defaults\n\
-		to: travis-run-vm). The backend may support persistent options\n\
-		per VM referenced by name, see backend documentation for\n\
-		details.\n\
+		Backend specific identifier associated with the VM. For the\n\
+		docker backend this is the repository name for the images to\n\
+		use. (defaults to \`dxld/travis-run' for docker backend)
 \n\
 \n\
 " "$(echo -n "$BACKENDS" | awk -v RS=" " '{ if($0) print "\t\t- " $0 }')"
@@ -54,6 +59,10 @@ run [BUILD_ID | BUILD_CONFIG]:\n\
 	the given BUILD_ID (see the \`matrix' command). On failure you will be\n\
 	dropped into a shell inside the build environment so you can figure \n\
 	out what's going on.\n\
+\n\
+		--shell\n\
+			Prepare for a build but instead of running it launch a\n\
+			shell.\n\
 \n\
 \n\
 stop:\n\
@@ -72,6 +81,9 @@ create:\n\
 		--docker-build-stage=STAGE\n\
 			Stage of the image build to run, (one of: base,\n\
 			script, language, project)\n\
+		--docker-no-pull\n\
+			Build all docker containers from scratch, don't try to\n\
+			pull them from the docker hub.
 \n\
 \n\
 clean:
@@ -98,7 +110,7 @@ matrix:
 #				sync to work. (required)"
 }
 
-TRAVIS_GETOPT_LONG="help,keep,vm-name,backend:"
+TRAVIS_GETOPT_LONG="help,version,keep,vm-name,backend:,shell"
 TRAVIS_GETOPT_SHORT="hkn:b:"
 
 if [ "$BACKEND_GETOPT_LONG" ]; then
@@ -115,20 +127,36 @@ eval set -- "$OPTS"
 
 BACKEND_ARGS=""
 
+takes_opt () {
+    [ $(printf '%s' "$LONGOPTS" | sed 's/,/\n/g' | grep "^$1:\$") ]
+}
+
+backend_args_append () {
+    if [ ! "$BACKEND_ARGS" ]; then
+	BACKEND_ARGS="$@"
+    else
+	BACKEND_ARGS="${BACKEND_ARGS} $@";
+    fi
+}
+
 while true; do
     case "$1" in
 	-h|--help)    usage; exit; ;;
+	--version)    echo "$VERSION"; exit; ;;
         -k|--keep)    OPT_KEEP=1; shift ;;
         -n|--vm-name) OPT_VM_NAME=$2; shift; shift ;;
         -b|--backend) OPT_BACKEND=$2; shift; shift ;;
 
+        --shell)      OPT_SHELL=1; shift ;;
+
 	--schroot-*|--vagrant-*|--docker-*)
-	    if [ ! "$BACKEND_ARGS" ]; then
-		BACKEND_ARGS="$1=$2";
+	    if takes_opt "$1"; then
+		backend_args_append "$1 $2"
+		shift; shift
 	    else
-		BACKEND_ARGS="${BACKEND_ARGS} $1 $2";
+		backend_args_append "$1"
+		shift
 	    fi
-	    shift; shift
 	    ;;
 
         --) shift; break ;;
@@ -139,8 +167,11 @@ done
 ## Global Options
 
 OPT_KEEP=$OPT_KEEP # OPT_KEEP unset by default
-OPT_VM_NAME=${OPT_VM_NAME:-travis-run-amd64}
 OPT_BACKEND=${OPT_BACKEND:-docker}
+
+case "$OPT_BACKEND" in
+    docker) OPT_VM_NAME=${OPT_VM_NAME:-dxld/travis-run} ;;
+esac
 
 ## Commands
 
@@ -150,12 +181,18 @@ else
     COMMAND="run"
 fi
 
+if [ "$OPT_SHELL" ] && [ x"$COMMAND" != x"run" ]; then
+    error "Error: Command \`$COMMAND' does not take option \`--shell'"
+    exit 1
+fi
+
 case "$COMMAND" in
-    run)    ( . "$SHARE_DIR"/travis-run-run.sh    );;
-    stop)   ( backend_end "$OPT_VM_NAME"          );;
-    create) ( . "$SHARE_DIR"/travis-run-create.sh );;
-    clean)  ( backend_clean "$OPT_VM_NAME"        );;
-    matrix) ( . "$SHARE_DIR"/travis-run-matrix.sh   );;
+    run)     ( . "$SHARE_DIR"/travis-run-run.sh    );;
+    stop)    ( backend_end "$OPT_VM_NAME"          );;
+    create)  ( . "$SHARE_DIR"/travis-run-create.sh );;
+    clean)   ( backend_clean "$OPT_VM_NAME"        );;
+    destroy) ( backend_destroy "$OPT_VM_NAME"      );;
+    matrix)  ( . "$SHARE_DIR"/travis-run-matrix.sh );;
     *)
 	echo "Error: unknown command \"$COMMAND\"">&2
 	echo "See \`$0 --help' for a list of valid commands"

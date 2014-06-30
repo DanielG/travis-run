@@ -1,3 +1,5 @@
+VERSION=$(shell git describe)
+
 all: README.md travis-run.1
 
 travis-run.1: travis-run
@@ -13,4 +15,7 @@ clean:
 	rm -f README.md travis-run.1
 
 install:
-	DESTDIR=$(DESTDIR) sh -x ./install.sh
+	DESTDIR=$(DESTDIR) sh -x ./install.sh $(VERSION)
+
+push: $(wildcard docker/* vm/* keys/travis-run_id_rsa script/*)
+	sh docker-build-images.sh
