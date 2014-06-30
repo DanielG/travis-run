@@ -349,7 +349,7 @@ docker_run () {
 
 	do_done "docker: Copying into container" \
 	    \( git ls-files --exclude-standard --others --cached -z \
-	    \| tee logloglog \| tar -c --null -T - \
+	    \| tar -c --null -T - \
 	    \| $DOCKER_SSH -T -- tar -C build -x \)
     fi
 
