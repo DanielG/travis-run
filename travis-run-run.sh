@@ -80,7 +80,7 @@ run_tests () {
 
     # Save environment just before exiting so we can restore it when launching
     # the debugging shell
-    travis_terminate=$(cat <<EOF)
+    travis_terminate=$(cat <<EOF
 #!/bin/bash
 travis_terminate() {
   env | sed -e '/PWD\|OLDPWD/d' -e 's/\(.*\)=\(.*\)/export \1="\2"/' >> ~/.profile;
@@ -88,6 +88,7 @@ travis_terminate() {
   exit \$1;
 };
 EOF
+)
 
     #remove definition of travis_terminate
     script=$(printf '%s\n' "$script" \
