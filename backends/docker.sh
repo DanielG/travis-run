@@ -4,14 +4,14 @@ backend_register_longopt "docker-no-pull"
 
 if [ x"$(uname)" = x"Darwin" ]; then
     debug "docker: Running on Darwin, using boot2docker."
-    BOOT2DOCKER=1
+    BOOT2DOCKER=true
 else
-    unset BOOT2DOCKER
+    BOOT2DOCKER=false
 fi
 
 boot2docker_init () {
-    [ "$DOCKER_HOST" ] && return
-    if [ "$BOOT2DOCKER" ] && [ x"$(boot2docker status)" != x"running" ]; then
+    [ -z "$DOCKER_HOST" ] && return
+    if $BOOT2DOCKER && [ x"$(boot2docker status)" != x"running" ]; then
 	do_done "docker: Starting boot2docker VM (this might take a while)" \
 	    boot2docker up '>/dev/null' '2>&1'
 
@@ -251,7 +251,7 @@ docker_init () {
 	    continue
 	else
 	    local listen
-	    if [ ! "$BOOT2DOCKER" ]; then
+	    if $BOOT2DOCKER; then
 		listen="127.0.0.1::"
 	    else
 		listen=""
@@ -278,7 +278,7 @@ docker_init () {
     ip=$(echo "$addr" | sed 's/:.*//')
     port=$(echo "$addr" | sed 's/.*://')
 
-    if [ "$BOOT2DOCKER" ]; then
+    if $BOOT2DOCKER; then
     	ip=$(boot2docker ip 2>/dev/null)
 
     	if [ $? -ne 0 ]; then
@@ -334,7 +334,7 @@ docker_run_script () {
     boot2docker_init || exit $?
 
     do_done "docker: Generating build script" \
-	docker run --rm -i "$VM_REPO:script" "$@"
+	docker run --rm -i "$VM_REPO:script_$VERSION" "$@"
 }
 
 ## Usage: docker_run VM_NAME COPY? [OPTIONS..] -- COMMAND
@@ -363,7 +363,7 @@ docker_run () {
     if [ x"$CPY" = x"copy" ]; then
 	$DOCKER_SSH -nT -- "rm -rf 'build/' && mkdir -p build/"
 
-	do_done "docker: Copying into container" \
+	do_done "docker: Copying directory into container" \
 	    \( git ls-files --exclude-standard --others --cached -z \
 	    \| tar -c --null -T - \
 	    \| $DOCKER_SSH -T -- tar -C build -x \)
