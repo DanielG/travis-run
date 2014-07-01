@@ -319,11 +319,10 @@ docker_end () {
     local DOCKER_CONTAINER_ID
     DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
 
-    do_done "docker: Stopping container $DOCKER_CONTAINER_ID"\
-	docker stop "$DOCKER_CONTAINER_ID" >/dev/null
+    docker stop -t 0 "$DOCKER_CONTAINER_ID" >/dev/null
 
     do_done "docker: Removing container $DOCKER_CONTAINER_ID" \
-	docker rm "$DOCKER_CONTAINER_ID" >/dev/null
+	docker rm "$DOCKER_CONTAINER_ID" >/dev/null || exit 1
 
     rm -f ".travis-run/$VM_NAME/docker-container-id"
 }
