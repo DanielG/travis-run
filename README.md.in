@@ -62,6 +62,38 @@ Usage
   configurations (i.e. different runtime versions/`env` variables) will be run
   one after another.
 
+If you just want to run a certain build, first see which ones are avalable:
+
+```
+$ travis-run matrix
+docker: Generating build script...done
+0: "ghc: 7.4"
+1: "ghc: 7.6"
+2: "ghc: 7.8"
+```
+
+Now pick one and use either the BUILD_ID in the first column or the BUILD_LABEL
+in quotes to specify which one to build, like so:
+
+```
+$ travis-run run "ghc: 7.6"
+docker: Generating build script...done
+docker: Starting container from image adafd960790c...done
+docker: Waiting for ssh to come up (this takes a while)...done
+Running build: "ghc: 7.6"
+docker: Copying directory into container...done
+[...build runs...]
+Build failed, please investigate.
+Welcome to Ubuntu 12.04.4 LTS (GNU/Linux 3.14-1-amd64 x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+Last login: Tue Jul  1 02:34:20 2014 from 172.17.42.1
+travis@8f5a20acf357:~$ ls
+drwxrwxr-x 1 travis travis 298 Jul  1 02:36 build
+travis@8f5a20acf357:~$
+```
+
+Once you're done debugging your problem just `exit` the shell.
 
 Man Page
 ========
