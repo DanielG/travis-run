@@ -40,7 +40,7 @@ $ debuild -uc -us
 OS X
 ----
 
-Install *boot2docker* from here: https://github.com/boot2docker/boot2docker-cli/releases
+Install *boot2docker* using the osx-installer from here: https://github.com/boot2docker/osx-installer/releases
 
 **DONT** use the homebrew package for *boot2docker* (or at least you're on your
   own if you do) as I couldn't get it to work reliably with
