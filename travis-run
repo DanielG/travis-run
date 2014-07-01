@@ -128,7 +128,9 @@ eval set -- "$OPTS"
 BACKEND_ARGS=""
 
 takes_opt () {
-    [ $(printf '%s' "$LONGOPTS" | sed 's/,/\n/g' | grep "^$1:\$") ]
+    [ $(printf '%s' "$LONGOPTS" \
+        | sed 's/,/\n/g' \
+        | grep "^$(echo "$1" | sed 's/^--//g'):\$") ]
 }
 
 backend_args_append () {
@@ -151,7 +153,7 @@ while true; do
 
 	--schroot-*|--vagrant-*|--docker-*)
 	    if takes_opt "$1"; then
-		backend_args_append "$1 $2"
+		backend_args_append "$1=$2"
 		shift; shift
 	    else
 		backend_args_append "$1"
