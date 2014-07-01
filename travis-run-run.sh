@@ -131,7 +131,7 @@ while true; do
     eval $(printf '%s' "$line")
     [ ! "$cfg" ] && continue
 
-    if [ "$BUILD_ID" = "$(echo -n "$BUILD_ID" | tr -dc '[0-9]')" ]; then
+    if [ "$BUILD_ID" = "$(printf "$BUILD_ID" | tr -dc '[0-9]')" ]; then
 	num=1
     else
 	num=0
