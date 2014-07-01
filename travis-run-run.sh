@@ -96,7 +96,7 @@ run_tests () {
     wait $pid
     RV=$?
 
-    if $CANCELLED; then
+    if ! $CANCELLED; then
         if [ $RV -ne 0 ]; then
     	    error "Build failed, please investigate." >&2
 
