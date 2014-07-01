@@ -61,14 +61,6 @@ init () {
 run_tests () {
     label="$1"
     cfg="$2"
-    # echo 'travis_run_onexit () {'
-    # echo 'RV=$?'
-    # echo 'if [ $RV -ne 0 ]; then
-    #    env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
-    #    exit $RV
-    # fi'
-    # echo '}'
-    # echo 'trap "travis_run_onexit" 0 2 15'
 
     local script
     script=$(printf '%s\n' "$cfg" \
@@ -103,7 +95,7 @@ EOF
         | sed '/^#!/d')
 
 
-    script="env; ${travis_terminate} ${script}"
+    script="${travis_terminate} ${script}"
 
     mkdir -p ".travis-run"
     fifo .travis-run/run_fifo
