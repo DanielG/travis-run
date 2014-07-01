@@ -31,9 +31,9 @@ if [ "$1" ]; then
     exit 1
 fi
 
-if [ ! "$OPT_KEEP" ]; then
-    CANCELLED=false
+CANCELLED=false
 
+if [ ! "$OPT_KEEP" ]; then
     trap '$INITIALIZED && CANCELLED=true && trap - INT && echo && backend_end '"$OPT_VM_NAME"'' INT
 
     trap '$INITIALIZED && [ $? -ne 0 ] && ! "$CANCELLED" && backend_end '"$OPT_VM_NAME" EXIT
@@ -57,58 +57,57 @@ init () {
 }
 
 run_tests () {
-	# echo 'travis_run_onexit () {'
-	# echo 'RV=$?'
-	# echo 'if [ $RV -ne 0 ]; then
-        #    env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
-        #    exit $RV
-        # fi'
-	# echo '}'
-	# echo 'trap "travis_run_onexit" 0 2 15'
+    # echo 'travis_run_onexit () {'
+    # echo 'RV=$?'
+    # echo 'if [ $RV -ne 0 ]; then
+    #    env | awk -v FS="=" '"'"'{ print "export " $1 "=\"" $2 "\"" }'"'"' >> ~/.bashrc;
+    #    exit $RV
+    # fi'
+    # echo '}'
+    # echo 'trap "travis_run_onexit" 0 2 15'
 
     local script
     script=$(printf '%s\n' "$1" \
 	| backend_run_script "$OPT_VM_NAME" --build 2>/dev/null)
 
-    if [ ! $CANCELLED ]; then
+    if $CANCELLED; then
+    	debug "Generating build script cancelled." >&2
+        exit 1
+    else
 	if [ $? != 0 ]; then
     	    info "Error: Generating build script failed." >&2
 	    exit 1
 	fi
-    else
-	exit 1
     fi
 
     mkdir -p ".travis-run"
-    trap 'rm -f ".travis-run/stderr_fifo"' 0
-    rm -f ".travis-run/stderr_fifo" && mkfifo ".travis-run/stderr_fifo"
+    fifo .travis-run/run_fifo
+    trap 'rm -f ".travis-run/run_fifo"' 0
 
+    printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
+	2> .travis-run/run_fifo &
 
-   printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
-	2> .travis-run/stderr_fifo &
+    local pid=$!
 
-    pid=$!
+    perl -pe '$|=1; s/(\x1b\[[^m]+.*)/\1\x1b[0m/g; s/\r/\n/g' \
+	< .travis-run/run_fifo 1>&2 &
 
-   perl -pe '$|=1; s/(\x1b\[[^m]+.*)/\1\x1b[0m/g; s/\r/\n/g' \
-	< .travis-run/stderr_fifo 1>&2 &
+    wait $!
+    wait $pid
+    RV=$?
 
-   wait $!
-   wait $pid
-   RV=$?
-    RV=1
-
-    if [ ! $CANCELLED ]; then
-	if [ $RV -ne 0 ]; then
+    if $CANCELLED; then
+        if [ $RV -ne 0 ]; then
     	    error "Build failed, please investigate." >&2
 
 	    backend_run "$OPT_VM_NAME" nocopy
 	    exit 1
-	fi
+        fi
 
-	info "Build Succeeded :)\n\n\n" >&2
+        info "Build Succeeded :)\n\n\n" >&2
     else
-	debug "Build cancelled :(\n\n\n"
-	exit 1
+        debug "Build cancelled :(\n\n\n"
+        exit 1
     fi
 }
 
