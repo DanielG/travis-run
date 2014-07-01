@@ -59,7 +59,6 @@ debug () {
     fi
 }
 
-
 error () {
     echo "$@" >&2
 }
@@ -67,7 +66,7 @@ error () {
 do_done () {
     [ "$QUIET" -lt 2 ] && printf "$1..." >&2 ; shift
     eval "$@"
-    if [ $? != 0 ]; then
+    if [ $? -ne 0 ]; then
 	[ "$QUIET" -lt 2 ] && echo "failed!" >&2
 	exit 1
     else
