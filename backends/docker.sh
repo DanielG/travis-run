@@ -9,6 +9,18 @@ else
     unset BOOT2DOCKER
 fi
 
+boot2docker_init () {
+    [ "$DOCKER_HOST" ] && return
+    if [ "$BOOT2DOCKER" ] && [ x"$(boot2docker status)" != x"running" ]; then
+	do_done "docker: Starting boot2docker VM (this might take a while)" \
+	    boot2docker up '>/dev/null' '2>&1'
+
+	[ $? -ne 0 ] && exit $?
+    fi
+    eval "export" $(boot2docker up 2>&1 \
+	| awk -n '/export DOCKER_HOST/{print $NF}')
+}
+
 docker_check_state_dir () {
     if [ ! -d ".travis-run/$VM_NAME" ]; then
 	error "travis-run: Can't find state dir:">&2
@@ -208,6 +220,8 @@ docker_init () {
 
     docker_check_state_dir "$VM_NAME"
 
+    boot2docker_init || exit $?
+
     local DOCKER_IMG_ID=$(cat ".travis-run/$VM_NAME/docker-image-id")
 
     while true; do
@@ -316,6 +330,8 @@ docker_run_script () {
     local VM_NAME VM_REPO
     VM_REPO="$1"; shift
     VM_NAME="$(basename "$VM_REPO")"
+
+    boot2docker_init || exit $?
 
     do_done "docker: Generating build script" \
 	docker run --rm -i "$VM_REPO:script" "$@"
