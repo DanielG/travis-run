@@ -47,6 +47,8 @@ docker_pull () {
 docker_create () {
     set -e
 
+    boot2docker_init
+
     local OPTS LANGUAGE OPT_DISTRIBUTION OPT_FROM OPT_STAGE
 
     OPTS=$($GETOPT -o "" --long docker-base-image:,docker-build-stage:,docker-no-pull -n "$(basename "$0")" -- "$@")
