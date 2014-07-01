@@ -87,7 +87,7 @@ run_tests () {
     trap 'rm -f ".travis-run/run_fifo"' 0
 
     printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
-	2> .travis-run/run_fifo &
+	> .travis-run/run_fifo 2>&1 &
 
     local pid=$!
 
