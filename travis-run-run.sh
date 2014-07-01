@@ -84,6 +84,25 @@ run_tests () {
 	fi
     fi
 
+    # Save environment just before exiting so we can restore it when launching
+    # the debugging shell
+    travis_terminate=$(cat <<EOF)
+#!/bin/bash
+travis_terminate() {
+  env | sed -e '/PWD\|OLDPWD/d' -e 's/\(.*\)=\(.*\)/export \1="\2"/' >> ~/.profile;
+  pkill -9 -P \$$ &> /dev/null || true;
+  exit \$1;
+};
+EOF
+
+    #remove definition of travis_terminate
+    script=$(printf '%s\n' "$script" \
+        | sed '/travis_terminate() {/,/}/d' \
+        | sed '/^#!/d')
+
+
+    script="env; ${travis_terminate} ${script}"
+
     mkdir -p ".travis-run"
     fifo .travis-run/run_fifo
 
@@ -92,6 +111,8 @@ run_tests () {
 
     local pid=$!
 
+    # 1) the build script doesn't terminate it's ANSI colors
+    # 2) remove lone CR's (they use them for folding metadata)
     perl -pe '$|=1; s/(\x1b\[[^m]+.*)/\1\x1b[0m/g; s/\r/\n/g' \
 	< .travis-run/run_fifo 1>&2 &
 
