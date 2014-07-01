@@ -205,7 +205,10 @@ docker_clean () {
 
     if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
 	docker_end "$VM_REPO"
-	docker rmi "$(cat ".travis-run/$VM_NAME/docker-image-id")"
+    fi
+
+    if [ -f ".travis-run/$VM_NAME/docker-image-id" ]; then
+    	docker rmi "$(cat ".travis-run/$VM_NAME/docker-image-id")"
 	rm -f ".travis-run/$VM_NAME/docker-image-id"
     fi
 }
