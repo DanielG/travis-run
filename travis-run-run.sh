@@ -86,7 +86,6 @@ run_tests () {
 
     mkdir -p ".travis-run"
     fifo .travis-run/run_fifo
-    trap 'rm -f ".travis-run/run_fifo"' 0
 
     printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
 	> .travis-run/run_fifo 2>&1 &
@@ -106,12 +105,15 @@ run_tests () {
             info "Current build: \"$label\"\n\n"
 
 	    backend_run "$OPT_VM_NAME" nocopy
+
+            rm -f ".travis-run/run_fifo"
 	    return 1
         fi
 
         info "Build Succeeded :)\n\n\n" >&2
     else
         debug "Build cancelled :(\n\n\n"
+        rm -f ".travis-run/run_fifo"
         return 1
     fi
 }
