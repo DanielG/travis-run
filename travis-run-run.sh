@@ -44,7 +44,7 @@ fi
 INITIALIZED=false
 
 init () {
-    "$INITIALIZED" && exit
+    "$INITIALIZED" && return
 
     INITIALIZED=true
 
