@@ -57,6 +57,8 @@ init () {
 }
 
 run_tests () {
+    label="$1"
+    cfg="$2"
     # echo 'travis_run_onexit () {'
     # echo 'RV=$?'
     # echo 'if [ $RV -ne 0 ]; then
@@ -67,7 +69,7 @@ run_tests () {
     # echo 'trap "travis_run_onexit" 0 2 15'
 
     local script
-    script=$(printf '%s\n' "$1" \
+    script=$(printf '%s\n' "$cfg" \
 	| backend_run_script "$OPT_VM_NAME" --build 2>/dev/null)
 
     RV=$?
@@ -101,6 +103,7 @@ run_tests () {
     if ! $CANCELLED; then
         if [ $RV -ne 0 ]; then
     	    error "Build failed, please investigate." >&2
+            info "Current build: \"$label\"\n\n"
 
 	    backend_run "$OPT_VM_NAME" nocopy
 	    return 1
@@ -145,7 +148,7 @@ while true; do
 
 	info "Running build: \"$label\""
 
-	run_tests "$cfg"
+	run_tests "$label" "$cfg"
 	if [ $? -ne 0 ]; then
 	    exit $?
 	fi
