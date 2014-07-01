@@ -10,7 +10,7 @@ else
 fi
 
 boot2docker_init () {
-    [ -z "$DOCKER_HOST" ] && return
+    [ -n "$DOCKER_HOST" ] && return
     if $BOOT2DOCKER && [ x"$(boot2docker status)" != x"running" ]; then
 	do_done "docker: Starting boot2docker VM (this might take a while)" \
 	    boot2docker up '>/dev/null' '2>&1'
