@@ -70,13 +70,15 @@ run_tests () {
     script=$(printf '%s\n' "$1" \
 	| backend_run_script "$OPT_VM_NAME" --build 2>/dev/null)
 
+    RV=$?
+
     if $CANCELLED; then
     	debug "Generating build script cancelled." >&2
-        exit 1
+        return 1
     else
-	if [ $? != 0 ]; then
+	if [ $RV != 0 ]; then
     	    info "Error: Generating build script failed." >&2
-	    exit 1
+	    return 1
 	fi
     fi
 
@@ -101,13 +103,13 @@ run_tests () {
     	    error "Build failed, please investigate." >&2
 
 	    backend_run "$OPT_VM_NAME" nocopy
-	    exit 1
+	    return 1
         fi
 
         info "Build Succeeded :)\n\n\n" >&2
     else
         debug "Build cancelled :(\n\n\n"
-        exit 1
+        return 1
     fi
 }
 
@@ -144,7 +146,7 @@ while true; do
 	info "Running build: \"$label\""
 
 	run_tests "$cfg"
-	if [ $? != 0 ]; then
+	if [ $? -ne 0 ]; then
 	    exit $?
 	fi
     fi
