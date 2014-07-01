@@ -256,7 +256,7 @@ docker_init () {
 	    continue
 	else
 	    local listen
-	    if $BOOT2DOCKER; then
+	    if ! $BOOT2DOCKER; then
 		listen="127.0.0.1::"
 	    else
 		listen=""
