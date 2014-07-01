@@ -34,7 +34,7 @@ fi
 CANCELLED=false
 
 if [ ! "$OPT_KEEP" ]; then
-    trap '$INITIALIZED && CANCELLED=true && trap - INT && ( [ "$BUILD_PID" ] && kill -s INT $BUILD_PID ) && echo && backend_end '"$OPT_VM_NAME"'' INT
+    trap '$INITIALIZED && CANCELLED=true && trap - INT && echo && backend_end '"$OPT_VM_NAME"'' INT
 
     trap '$INITIALIZED && ! "$CANCELLED" && backend_end '"$OPT_VM_NAME" EXIT
 
