@@ -293,7 +293,7 @@ docker_init () {
 	chmod 600 ~/.travis-run/travis-run_id_rsa
     fi
 
-    DOCKER_SSH="ssh -q -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ControlMaster=no -i $HOME/.travis-run/travis-run_id_rsa -p $port travis@$ip"
+    DOCKER_SSH="env LANG=C.UTF-8 ssh -q -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ControlMaster=no -o SendEnv=None -i $HOME/.travis-run/travis-run_id_rsa -p $port travis@$ip"
 
     do_done "docker: Waiting for ssh to come up (this takes a while)" \
 	retry 3 $DOCKER_SSH -Tn -- echo hai >/dev/null
