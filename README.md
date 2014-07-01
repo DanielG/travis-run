@@ -33,14 +33,17 @@ $ debuild -uc -us
 OS X
 ----
 
+Install *boot2docker* from here: https://github.com/boot2docker/boot2docker-cli/releases
+
+**DONT** use the homebrew package for *boot2docker* (or at least you're on your
+  own if you do) as I couldn't get it to work reliably with
+  *travis-run*. Patches welcome etc. ;)
+
 ```
 $ brew tap andy-morris/homebrew-extra
 $ brew install travis-run
 $ boot2docker init
 ```
-
-Before you use travis-run you have to run `boot2docker up` and export
-`DOCKER_HOST` as instructed.
 
 Usage
 =====
@@ -144,5 +147,5 @@ COMMANDS
 
 
 
-travis-run 0.1                     June 2014                     TRAVIS-RUN(1)
+travis-run 0.1                     July 2014                     TRAVIS-RUN(1)
 ```
