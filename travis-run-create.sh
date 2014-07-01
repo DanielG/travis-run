@@ -46,4 +46,6 @@ if [ ! "$LANGUAGE" ]; then
     exit 1
 fi
 
+backend_clean "$OPT_VM_NAME"
+
 backend_create "$OPT_VM_NAME" "$LANGUAGE"
