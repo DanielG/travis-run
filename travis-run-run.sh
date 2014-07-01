@@ -39,6 +39,8 @@ if [ ! "$OPT_KEEP" ]; then
     trap '$INITIALIZED && ! "$CANCELLED" && backend_end '"$OPT_VM_NAME" EXIT
 
     trap '$INITIALIZED && backend_end '"$OPT_VM_NAME" TERM
+
+    backend_end "$OPT_VM_NAME"
 fi
 
 INITIALIZED=false

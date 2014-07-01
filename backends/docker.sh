@@ -309,12 +309,7 @@ docker_end () {
     VM_REPO="$1"; shift
     VM_NAME="$(basename "$VM_REPO")"
 
-    docker_check_state_dir "$VM_NAME"
-
-    if [ ! -f ".travis-run/$VM_NAME/docker-container-id" ]; then
-	error "docker: .travis-run/$VM_NAME/docker-container-id not found."
-	exit 1
-    fi
+    [ ! -f ".travis-run/$VM_NAME/docker-container-id" ] && return
 
     local DOCKER_CONTAINER_ID
     DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
