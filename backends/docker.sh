@@ -76,90 +76,90 @@ docker_create () {
 	exit 1
     fi
 
-    (
-	[ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && exit
-	docker_pull "$VM_REPO:script" && exit
+    tmpdir=$(mktemp -p "${TMPDIR:-/tmp/}" -d travis-run-XXXX) || exit 1
+    trap 'rm -rf '"$tmpdir" 0
 
+    cp -p  "$SHARE_DIR"/vm/*   "$tmpdir"
+    cp -rp "$SHARE_DIR"/script "$tmpdir"
+    cp -p  "$SHARE_DIR"/keys/* "$tmpdir"
+
+    local script_tag="$VM_REPO:script_$VERSION"
+    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && \
+        ! docker_pull "$script_tag" || true
+    then
 	info "Creating build-script image">&2
 
-	mkdir -p ~/.travis-run/"$VM_NAME:script"
-	rm -rf ~/.travis-run/"$VM_NAME:script"/script
-	cp -rp "$SHARE_DIR/script"  ~/.travis-run/"$VM_NAME:script"
-	cp -p "$SHARE_DIR/keys/travis-run_id_rsa.pub" \
-	    ~/.travis-run/"$VM_NAME:script"
-
-	sed "s|\$FROM|${OPT_SCRIPT_FROM}"'|' \
+        sed "s|\$FROM|${OPT_SCRIPT_FROM}"'|' \
 	    < "$SHARE_DIR/docker/Dockerfile.script" \
-	    > ~/.travis-run/"$VM_NAME:script"/Dockerfile
+	    > "$tmpdir"/Dockerfile
 
-	docker build -t "$VM_REPO:script" ~/.travis-run/"$VM_NAME:script"
-	echo "$VM_REPO:script" >> ~/.travis-run/images
-    )
+	docker build -t "$script_tag" "$tmpdir" || exit 1
 
-    (
-	[ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && exit
-	docker_pull "$VM_REPO:base" && exit
+	echo "$script_tag" >> ~/.travis-run/images
+    fi
 
+    local base_tag="$VM_REPO:base_$VERSION"
+    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && \
+        ! docker_pull "$base_tag" || true
+    then
 	info "Creating base image">&2
 
-	mkdir -p ~/.travis-run/"$VM_NAME:base"
-	cp -p "$SHARE_DIR/vm/base-install.sh"   ~/.travis-run/"$VM_NAME:base"
-	cp -p "$SHARE_DIR/vm/base-configure.sh" ~/.travis-run/"$VM_NAME:base"
-	cp -p "$SHARE_DIR/keys/travis-run_id_rsa.pub" \
-	    ~/.travis-run/"$VM_NAME:base"
-
-	sed "s/\$OPT_FROM/$OPT_FROM"'/' \
+        sed "s/\$OPT_FROM/$OPT_FROM"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.base" \
-	    > ~/.travis-run/"$VM_NAME:base"/Dockerfile
+	    > "$tmpdir"/Dockerfile
 
-	docker build --rm=false -t "$VM_REPO:base" \
-	    ~/.travis-run/"$VM_NAME:base"
+	docker build --rm=false -t "$base_tag" "$tmpdir" || exit 1
 
-	echo "$VM_REPO:base" >> ~/.travis-run/images
-    )
+	echo "$base_tag" >> ~/.travis-run/images
+    fi
 
-    (
-	[ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && exit
-	docker_pull "$VM_REPO:$OPT_LANGUAGE" && exit
-
+    local language_tag="$VM_REPO:${OPT_LANGUAGE}_$VERSION"
+    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && \
+        ! docker_pull "$language_tag" || true
+    then
 	info "Creating language image"
 
-	mkdir -p ~/.travis-run/"$VM_NAME:$OPT_LANGUAGE"
-	cp -p "$SHARE_DIR/vm/language-install.sh" \
-	    ~/.travis-run/"$VM_NAME:$OPT_LANGUAGE"
-
-	sed "s|\$FROM|$VM_REPO:base"'|' \
+	sed -e "s|\$FROM|$base_tag"'|' \
+            -e "s/\$OPT_LANGUAGE/$OPT_LANGUAGE"'/' \
 	    < "$SHARE_DIR/docker/Dockerfile.language" \
-	    > ~/.travis-run/"$VM_NAME:$OPT_LANGUAGE"/Dockerfile
-	sed -i "s/\$OPT_LANGUAGE/$OPT_LANGUAGE"'/' \
-	    ~/.travis-run/"$VM_NAME:$OPT_LANGUAGE"/Dockerfile
+	    > "$tmpdir"/Dockerfile
 
-	docker build -t "$VM_REPO:$OPT_LANGUAGE" \
-	    ~/.travis-run/"$VM_NAME:$OPT_LANGUAGE"
+	docker build -t "$language_tag" "$tmpdir" || exit 1
 
-	echo "$VM_REPO:$OPT_LANGUAGE" >> ~/.travis-run/images
-    )
+	echo "$language_tag" >> ~/.travis-run/images
+    fi
 
-    (
-	[ "$OPT_STAGE" -a "$OPT_STAGE" != "project" ] && exit
-
+    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "project" ]; then
 	info "Creating per-project image"
 
 	mkdir -p ".travis-run/$VM_NAME"
 
 	if [ ! -e ".travis-run/$VM_NAME/Dockerfile" ]; then
-	    sed "s|\$FROM|$VM_REPO:$OPT_LANGUAGE|" \
+	    sed "s|\$FROM|$language_tag|" \
 		< "$SHARE_DIR/docker/Dockerfile.project" \
-		> .travis-run/"$VM_NAME"/Dockerfile
+		> ".travis-run/$VM_NAME"/Dockerfile
 	fi
 
-	DOCKER_ID=$(docker build ".travis-run/$VM_NAME" 2>/dev/null \
+        fifo ".travis-run/build-stdout"
+
+        docker build ".travis-run/$VM_NAME" 2>/dev/null \
+            > ".travis-run/build-stdout" &
+        local build_pid=$!
+
+	DOCKER_ID=$(cat ".travis-run/build-stdout" \
 	    | grep 'Successfully built' \
 	    | awk '{ print $3 }')
 
+        wait $build_pid
+        if [ $? -ne 0 ]; then
+            rm -f .travis-run/build-stdout
+            exit $?
+        fi
+
 	echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-image-id"
 	echo "$DOCKER_ID" >> ~/.travis-run/images
-    )
+        rm -f .travis-run/build-stdout
+    fi
 }
 
 docker_destroy () {
