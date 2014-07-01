@@ -34,7 +34,7 @@ fi
 CANCELLED=false
 
 if [ ! "$OPT_KEEP" ]; then
-    trap '$INITIALIZED && CANCELLED=true && trap - INT && echo && backend_end '"$OPT_VM_NAME"'' INT
+    trap '$INITIALIZED && CANCELLED=true && trap - INT && ( [ "$BUILD_PID" ] && kill -s INT $BUILD_PID ) && echo && backend_end '"$OPT_VM_NAME"'' INT
 
     trap '$INITIALIZED && ! "$CANCELLED" && backend_end '"$OPT_VM_NAME" EXIT
 
@@ -109,7 +109,7 @@ EOF
     printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
 	> .travis-run/run_fifo 2>&1 &
 
-    local pid=$!
+    BUILD_PID=$!
 
     # 1) the build script doesn't terminate it's ANSI colors
     # 2) remove lone CR's (they use them for folding metadata)
@@ -117,8 +117,10 @@ EOF
 	< .travis-run/run_fifo 1>&2 &
 
     wait $!
-    wait $pid
+    wait $BUILD_PID
     RV=$?
+    unset BUILD_PID
+
 
     if ! $CANCELLED; then
         if [ $RV -ne 0 ]; then
