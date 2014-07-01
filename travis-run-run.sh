@@ -31,27 +31,28 @@ if [ "$1" ]; then
     exit 1
 fi
 
-init () {
-    [ "$INITIALIZED" ] && exit
+if [ ! "$OPT_KEEP" ]; then
+    CANCELLED=false
 
-    INITIALIZED=1
+    trap '$INITIALIZED && CANCELLED=true && trap - INT && echo && backend_end '"$OPT_VM_NAME"'' INT
+
+    trap '$INITIALIZED && [ $? -ne 0 ] && ! "$CANCELLED" && backend_end '"$OPT_VM_NAME" EXIT
+
+    trap '$INITIALIZED && backend_end '"$OPT_VM_NAME" TERM
+fi
+
+INITIALIZED=false
+
+init () {
+    "$INITIALIZED" && exit
+
+    INITIALIZED=true
 
     backend_init "$OPT_VM_NAME"
 
     if [ $? -ne 0 ]; then
 	echo "Starting VM failed">&2
 	exit 1
-    fi
-
-    if [ ! "$OPT_KEEP" ]; then
-	# Stop VM in background on SIGINT
-	trap 'CANCELLED=1; echo; backend_end '"$OPT_VM_NAME"'' 2
-
-	# exit
-	trap '[ $? != 0 ] && [ ! "$CANCELLED" ] && backend_end '"$OPT_VM_NAME" 0
-
-	# SIGTERM
-	trap 'backend_end '"$OPT_VM_NAME" 15
     fi
 }
 
