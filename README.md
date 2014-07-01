@@ -12,9 +12,15 @@ published by them.
 Installation
 ============
 
-The simplest way to install *travis-run* is to just `git clone
-https://github.com/DanielG/travis-run.git && git checkout $(git describe | awk
--vFS=- '{ print $1 }'` and add the resulting directory to your *PATH*.
+The simplest way to install *travis-run* is to just clone it and add the
+resulting directory to your *PATH*:
+
+```
+$ git clone https://github.com/DanielG/travis-run.git
+$ cd travis-run
+$ git checkout $(git describe | awk -vFS=- '{ print $1 }'
+$ export PATH=$PATH:$PWD # also put that it in your shell's rc file
+```
 
 If you want to get more fancy the following installation methods are also
 available:
@@ -25,8 +31,8 @@ Debian
 ```
 # apt-get install devscripts
 $ git clone https://github.com/DanielG/travis-run.git
-$ git checkout $(git describe | awk -vFS=- '{ print $1 }' # chekout latest release
 $ cd travis-run
+$ git checkout $(git describe | awk -vFS=- '{ print $1 }' # chekout latest release
 $ debuild -uc -us
 # dpkg -i ../travis-run_*.deb
 ```
