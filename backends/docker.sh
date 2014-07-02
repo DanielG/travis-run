@@ -90,7 +90,7 @@ docker_create () {
 
     local script_tag="$VM_REPO:script_$VERSION"
     if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"script" ] \
-        && ! docker_pull "$script_tag" || true
+        && ! docker_pull "$script_tag"
     then
 	info "Creating build-script image">&2
 
@@ -105,7 +105,7 @@ docker_create () {
 
     local base_tag="$VM_REPO:base_$VERSION"
     if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"base" ] \
-        && ! docker_pull "$base_tag" || true
+        && ! docker_pull "$base_tag"
     then
 	info "Creating base image">&2
 
@@ -120,7 +120,7 @@ docker_create () {
 
     local language_tag="$VM_REPO:${OPT_LANGUAGE}_$VERSION"
     if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"language" ] \
-        && ! docker_pull "$language_tag" || true
+        && ! docker_pull "$language_tag"
     then
 	info "Creating language image"
 
