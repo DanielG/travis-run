@@ -120,7 +120,7 @@ EOF
     if ! $CANCELLED; then
         if [ $RV -ne 0 ]; then
     	    error "Build failed, please investigate." >&2
-            info "Current build: \"$label\"\n\n"
+            info "Current build: \"$label\""
 
 	    backend_run "$OPT_VM_NAME" nocopy
 
