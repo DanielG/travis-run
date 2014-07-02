@@ -45,8 +45,6 @@ docker_pull () {
 }
 
 docker_create () {
-    set -e
-
     boot2docker_init
 
     local OPTS LANGUAGE OPT_DISTRIBUTION OPT_FROM OPT_STAGE
@@ -305,8 +303,6 @@ docker_init () {
 }
 
 docker_end () {
-    set -e
-
     local VM_NAME VM_REPO
     VM_REPO="$1"; shift
     VM_NAME="$(basename "$VM_REPO")"
