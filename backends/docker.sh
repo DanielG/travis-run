@@ -44,7 +44,9 @@ docker_pull () {
     fi
 
     docker pull "$@"
+    RV=$?
     echo "$@" >> ~/.travis-run/images
+    return $RV
 }
 
 docker_create () {
