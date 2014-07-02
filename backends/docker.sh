@@ -87,8 +87,8 @@ docker_create () {
     cp -p  "$SHARE_DIR"/keys/* "$tmpdir"
 
     local script_tag="$VM_REPO:script_$VERSION"
-    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "script" ] && \
-        ! docker_pull "$script_tag" || true
+    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"script" ] \
+        && ! docker_pull "$script_tag" || true
     then
 	info "Creating build-script image">&2
 
@@ -102,8 +102,8 @@ docker_create () {
     fi
 
     local base_tag="$VM_REPO:base_$VERSION"
-    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "base" ] && \
-        ! docker_pull "$base_tag" || true
+    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"base" ] \
+        && ! docker_pull "$base_tag" || true
     then
 	info "Creating base image">&2
 
@@ -117,8 +117,8 @@ docker_create () {
     fi
 
     local language_tag="$VM_REPO:${OPT_LANGUAGE}_$VERSION"
-    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "language" ] && \
-        ! docker_pull "$language_tag" || true
+    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"language" ] \
+        && ! docker_pull "$language_tag" || true
     then
 	info "Creating language image"
 
@@ -132,7 +132,7 @@ docker_create () {
 	echo "$language_tag" >> ~/.travis-run/images
     fi
 
-    if ! [ "$OPT_STAGE" -a "$OPT_STAGE" != "project" ]; then
+    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"project" ]; then
 	info "Creating per-project image"
 
 	mkdir -p ".travis-run/$VM_NAME"
