@@ -111,7 +111,7 @@ docker_create () {
 	    < "$SHARE_DIR/docker/Dockerfile.base" \
 	    > "$tmpdir"/Dockerfile
 
-	docker build --rm=false -t "$base_tag" "$tmpdir" || exit 1
+	docker build -t "$base_tag" "$tmpdir" || exit 1
 
 	echo "$base_tag" >> ~/.travis-run/images
     fi
