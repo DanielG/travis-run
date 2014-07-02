@@ -224,7 +224,7 @@ docker_init () {
     local DOCKER_CONTAINER_NAME
     DOCKER_CONTAINER_NAME="travis-run_$(printf '%s' "$PWD" | sed 's|/|-|g')"
 
-    docker_check_state_dir "$VM_NAME"
+    docker_check_state_dir
 
     boot2docker_init || exit $?
 
@@ -331,6 +331,8 @@ docker_run_script () {
 
     boot2docker_init || exit $?
 
+    docker_check_state_dir
+
     do_done "docker: Generating build script" \
 	docker run --rm -i "$VM_REPO:script_$VERSION" "$@"
 }
@@ -349,7 +351,7 @@ docker_run () {
     VM_NAME="$(basename "$VM_REPO")"
     CPY=$1; shift
 
-    docker_check_state_dir "$VM_NAME"
+    docker_check_state_dir
 
     if [ ! -f ".travis-run/$VM_NAME/docker-image-id" ]; then
 	error "travis-run: Can't get docker image id.">&2
