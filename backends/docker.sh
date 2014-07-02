@@ -11,14 +11,17 @@ fi
 
 boot2docker_init () {
     [ -n "$DOCKER_HOST" ] && return
-    if $BOOT2DOCKER && [ x"$(boot2docker status)" != x"running" ]; then
-	do_done "docker: Starting boot2docker VM (this might take a while)" \
-	    boot2docker up '>/dev/null' '2>&1'
+    if $BOOT2DOCKER; then
+        if [ x"$(boot2docker status)" != x"running" ]; then
+	    do_done "docker: Starting boot2docker VM (this might take a while)" \
+	        boot2docker up '>/dev/null' '2>&1'
 
-	[ $? -ne 0 ] && exit $?
+	    [ $? -ne 0 ] && exit $?
+        fi
+
+        eval "export" $(boot2docker up 2>&1 \
+	    | awk -n '/export DOCKER_HOST/{print $NF}')
     fi
-    eval "export" $(boot2docker up 2>&1 \
-	| awk -n '/export DOCKER_HOST/{print $NF}')
 }
 
 docker_check_state_dir () {
