@@ -36,6 +36,7 @@ chmod +x "$DESTDIR/$BIN_DIR/travis-run"
 cp -R \
     travis-run-create.sh \
     travis-run-run.sh \
+    travis-run-matrix.sh \
     vm \
     docker \
     keys \
