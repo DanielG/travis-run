@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/DanielG/travis-run
 
 Package: travis-run
 Architecture: all
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, docker.io, libyaml-tiny-perl
 Suggests: ruby
 Description: Run travis-ci builds locally using Docker
  travis-run creates virtual machines resembling the build environment provided
