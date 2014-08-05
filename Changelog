@@ -1,3 +1,10 @@
+Changes in 0.2.2:
+	- Use YAML::Tiny perl module instead of YAML
+	- Create ~/.travis-run before using it.
+
+Changes in 0.2.1:
+	- Fix install target not installing some scripts.
+
 Changes in 0.2:
 	- Add `destroy` command to delete all docker images created by
 	travis-run.
