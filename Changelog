@@ -1,0 +1,23 @@
+Changes in 0.2:
+	- Add `destroy` command to delete all docker images created by
+	travis-run.
+
+	- Add support for pulling pre-built images from the docker hub,
+	this is now the default.
+
+	- Cleanup old docker container before starting a new one.
+
+	- Reuse running and stopped containers.
+
+	- Add explicit boot2docker support +workarounds.
+
+	- Add `--shell` option to `run` command, just drops into a shell
+	without running the build.
+
+	- Don't use `~/.travis-run/*/` for docker contexts anymore, now
+	using a tmp-dir.
+
+	- Save environment after build and restore it when dropping into a
+	shell.
+
+	- Lots and lots of fixes.
