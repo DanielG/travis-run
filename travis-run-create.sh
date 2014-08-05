@@ -25,17 +25,17 @@ fi
 
 LANGUAGE=""
 
-perl -e 'use YAML;' >/dev/null 2>&1
+perl -e 'use YAML::Tiny;' >/dev/null 2>&1
 PERL_YAML=$?
 
 ruby -e 'require "yaml"' >/dev/null 2>&1
 RUBY_YAML=$?
 
 if [ $PERL_YAML -ne 0 ] && [ $RUBY_YAML -ne 0 ]; then
-    echo "You need to have perl's YAML module or ruby's 'yaml' gem installed.">&2
+    echo "You need to have perl's YAML::Tiny module or ruby's 'yaml' gem installed.">&2
     exit 1
 elif [ $PERL_YAML -eq 0 ]; then
-    LANGUAGE=$(perl -e 'use YAML (LoadFile); print LoadFile(".travis.yml")->{"language"};')
+    LANGUAGE=$(perl -e 'use YAML::Tiny; print YAML::Tiny->read(".travis.yml")->[0]->{"language"};')
 else
     LANGUAGE=$(ruby -e 'require "yaml"; puts YAML.load_file(".travis.yml")["language"]')
 fi
