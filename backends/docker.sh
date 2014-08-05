@@ -25,6 +25,8 @@ boot2docker_init () {
 }
 
 docker_check_state_dir () {
+    mkdir -p ~/.travis-run
+
     if [ ! -d ".travis-run/$VM_NAME" ]; then
 	error "travis-run: Can't find state dir:">&2
 	error "    $PWD/.travis-run/$VM_NAME">&2
