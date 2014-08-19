@@ -18,7 +18,7 @@ resulting directory to your *PATH*:
 ```
 $ git clone https://github.com/DanielG/travis-run.git
 $ cd travis-run
-$ git checkout $(git describe | awk -vFS=- '{ print $1 }' # chekout latest release
+$ git checkout $(git describe | awk -vFS=- '{ print $1 }') # chekout latest release
 $ export PATH=$PATH:$PWD # also put that it in your shell's rc file
 ```
 
@@ -32,7 +32,7 @@ Debian
 # apt-get install devscripts
 $ git clone https://github.com/DanielG/travis-run.git
 $ cd travis-run
-$ git checkout $(git describe | awk -vFS=- '{ print $1 }' # chekout latest release
+$ git checkout $(git describe | awk -vFS=- '{ print $1 }') # chekout latest release
 $ debuild -uc -us
 # dpkg -i ../travis-run_*.deb
 ```
