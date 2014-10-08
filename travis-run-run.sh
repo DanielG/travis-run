@@ -93,8 +93,8 @@ EOF
     #remove definition of travis_terminate
     script=$(printf '%s\n' "$script" \
         | sed '/travis_terminate() {/,/}/d' \
-        | sed '/^#!/d')
-
+        | sed '/^#!/d' \
+        | sed '/resolv.conf/d')
 
     script="${travis_terminate} ${script}"
 
