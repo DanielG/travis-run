@@ -2,6 +2,7 @@
 ## To modify the environment for your builds modify the Dockerfile in
 ## .travis-run/$VM_NAME in your project directory instead.
 FROM $OPT_FROM
+WORKDIR /root
 
 RUN apt-get update && apt-get install -y openssh-server; mkdir /var/run/sshd
 
@@ -14,6 +15,5 @@ ADD base-configure.sh     /root/
 ADD travis-run_id_rsa.pub /root/
 RUN /root/base-configure.sh travis
 
-WORKDIR /root
 CMD /usr/sbin/sshd -D
 EXPOSE 22
