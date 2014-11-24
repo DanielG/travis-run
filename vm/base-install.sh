@@ -8,7 +8,10 @@ apt-get install \
     rubygems ruby-dev \
     python-software-properties
 
-gem install --no-ri --no-rdoc chef
+gem install --no-ri --no-rdoc bundler
+bundler install --binstubs
+ln -s "$PWD/bin/chef-solo" /usr/local/bin/chef-solo || true
+ls -l /usr/local/bin
 
 wget -O - https://github.com/travis-ci/travis-cookbooks/archive/master.tar.gz | tar -xz
 mkdir -p /var/chef/cookbooks

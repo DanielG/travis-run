@@ -34,8 +34,13 @@ printf '{
 
 case "$LANGUAGE" in
     haskell) RUNLIST="-o haskell::multi,sweeper" ;;
+    php) RUNLIST="-o php::multi,composer,sweeper"
+         apt-get install m4
+        ;;
     *)
+        echo; echo; echo
 	echo "Warning: Untested language: $LANGUAGE"
+        echo; echo; echo
 	RUNLIST="$LANGUAGE"
 	;;
 esac

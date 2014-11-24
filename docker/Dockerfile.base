@@ -6,6 +6,8 @@ FROM $OPT_FROM
 RUN apt-get update && apt-get install -y openssh-server; mkdir /var/run/sshd
 
 ADD base-install.sh       /root/
+ADD Gemfile               /root/
+ADD Gemfile.lock          /root/
 RUN /root/base-install.sh
 
 ADD base-configure.sh     /root/
