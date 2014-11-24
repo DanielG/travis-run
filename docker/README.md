@@ -3,15 +3,15 @@ Dockerfiles for the "docker" backend
 
 - Dockerfile.base
 
-  To build the base image `prepare-travis-base-image.sh` will be run. It will
-  set up the overall system environment as a travis worker VM. No language
-  specific configuration will be done.
+  To build the base image `vm/base-install.sh` and `vm/base-configure.sh` will
+  be run. It will set up the overall system environment as a travis worker
+  VM. No language specific configuration will be done.
 
 - Dockerfile.language
 
   The language specific images are built from this Dockerfile. This includes
-  running `prepare-travis-language-image.sh` during the image build, it will run
-  the travis-cookbooks appropriate for the given language.
+  running `vm/language-install.sh` during the image build, it will run the
+  travis-cookbooks appropriate for the given language.
 
 - Dockerfile.template
 
