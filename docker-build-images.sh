@@ -7,3 +7,4 @@ cd "$(dirname "$0")"
 docker_create --docker-no-pull --docker-build-stage=script   dxld/travis-run any
 docker_create --docker-no-pull --docker-build-stage=base     dxld/travis-run any
 docker_create --docker-no-pull --docker-build-stage=language dxld/travis-run haskell
+docker_create --docker-no-pull --docker-build-stage=language dxld/travis-run php

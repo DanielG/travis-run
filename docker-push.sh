@@ -13,5 +13,6 @@ fi
 docker login
 docker push dxld/travis-run:script_$1
 docker push dxld/travis-run:haskell_$1
+docker push dxld/travis-run:php_$1
 docker push dxld/travis-run:base_$1
 rm -f ~/.dockercfg
