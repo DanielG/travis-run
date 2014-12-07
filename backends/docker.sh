@@ -43,7 +43,8 @@ docker_exists () {
 }
 
 docker_tag_exists () {
-    docker images --no-trunc | awk '{ print $1 ":" $2 " " }' | grep -q "^$*\$"
+    docker images --no-trunc \
+        | awk '{ print $1 ":" $2 " " }' | trim | grep -q "^$*\$"
 }
 
 
@@ -446,7 +447,7 @@ docker_run_script () {
 
     if ! docker_tag_exists $tag; then
         error "\
-travis-run: The docker image ($vm_repo:script_$VERSION) could not be found.\n\
+travis-run: The docker image ($tag) could not be found.\n\
 \n\
 Please re-run \`travis-run create'.\
 " >&2
