@@ -13,7 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION=$(cd "$(dirname "$0")" && git describe || echo "(unknown)")
+# Do not split this line. Also it will be replaced by the conrete version by
+# install.sh so TRAVIS_RUN_VERSION can only be used to override VERSION during
+# development
+VERSION=${TRAVIS_RUN_VERSION:-$(cd "$(dirname "$0")" && sh install-version.sh || echo "(unknown)")}
+
+
 export SHARE_DIR="$(dirname "$0")"
 export LIB_DIR="$(dirname "$0")/lib"
 
