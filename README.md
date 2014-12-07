@@ -102,6 +102,12 @@ travis@8f5a20acf357:~$
 
 Once you're done debugging your problem just `exit` the shell.
 
+IRC
+===
+
+If you have any problems, suggestions or comments swing by
+[#travis-run](irc://chat.freenode.net/trais-run) on Freenode.
+
 Man Page
 ========
 ```
@@ -140,16 +146,19 @@ GLOBAL OPTIONS
 
        -n, --vm-name=VM_NAME
 
-              Backend  specific  identifier  associated  with  the VM. For the
-              docker backend this is the repository name  for  the  images  to
-              use. (defaults to `dxld/travis-run' for docker backend)
+              Backend specific identifier associated with the VM.
+
+              For  the  docker  backend  this  should  be in the form `REPOSI‐
+              TORY/IMAGE'. This will be used to pull prebuilt container images
+              too  as  to  tag  built  container images when prebuilts are not
+              found. (defaults to `dxld/travis-run')
 
 COMMANDS
    run [BUILD_ID | BUILD_CONFIG]:
-              (default  if  no command given) Run the build matrix in sequence
-              and abort on the first failure or run the  given  BUILD_ID  (see
-              the  `matrix'  command).  On  failure you will be dropped into a
-              shell inside the build environment so you can figure out  what's
+              (default if no command given) Run the build matrix  in  sequence
+              and  abort  on  the first failure or run the given BUILD_ID (see
+              the `matrix' command). On failure you will  be  dropped  into  a
+              shell  inside the build environment so you can figure out what's
               going on.
 
        --shell
@@ -160,15 +169,15 @@ COMMANDS
               it's disk state.
 
    create:
-              Setup build VM. Depending on the  backend  it  might  be  stored
+              Setup  build  VM.  Depending  on  the backend it might be stored
               globally or in `.travis-run' in the current directory.
 
        --docker-base-image=BASE_IMAGE
-              Docker  image  to  use as the base for the container, see `FROM'
+              Docker image to use as the base for the  container,  see  `FROM'
               Dockerfile command.  (defaults to: ubuntu:presice)
 
        --docker-build-stage=STAGE
-              Stage of the image build to run, (one  of:  base,  script,  lan‐
+              Stage of the image build to run, (one of: os, base, script, lan‐
               guage, project)
 
        --docker-no-pull
@@ -180,11 +189,11 @@ COMMANDS
               in the project directory.
 
    matrix:
-              Print  the  build  matrix. The number in the first column is the
-              BUILD_ID. The part after the ':' is the BUILD_CONFIG, note  that
+              Print the build matrix. The number in the first  column  is  the
+              BUILD_ID.  The part after the ':' is the BUILD_CONFIG, note that
               this is whitespace sensitive.
 
 
 
-travis-run 0.1                     July 2014                     TRAVIS-RUN(1)
+travis-run 0.1                   December 2014                   TRAVIS-RUN(1)
 ```

@@ -43,13 +43,12 @@ usage () {
 		\`travis-run stop' after you're done with the VM.\n\
 \n\
 	-n, --vm-name=VM_NAME\n\
-		Backend specific identifier associated with the VM.
-		- docker:
-		    For the docker backend this shoulb be in the form
-		    \`REPOSITORY/IMAGE'.
-		    This will be used to pull prebuilt container images as well
-		    as to tag built container images when prebuilts are not
-		    found. (defaults to \`dxld/travis-run')\n\
+		Backend specific identifier associated with the VM.\n\
+\n\
+		For the docker backend this should be in the form\n\
+		\`REPOSITORY/IMAGE'. This will be used to pull prebuilt\n\
+		container images too as to tag built container images when\n\
+		prebuilts are not found. (defaults to \`dxld/travis-run')\n\
 \n\
 \n\
 " "$(echo -n "$BACKENDS" | awk -v RS=" " '{ if($0) print "\t\t- " $0 }')"
