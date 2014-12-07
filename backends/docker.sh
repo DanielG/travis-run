@@ -14,7 +14,7 @@ boot2docker_init () {
     if $BOOT2DOCKER; then
         if [ x"$(boot2docker status)" != x"running" ]; then
 	    do_done "docker: Starting boot2docker VM (this might take a while)" \
-	        boot2docker up '>/dev/null' '2>&1'
+	        err2null boot2docker up '>/dev/null'
 
 	    [ $? -ne 0 ] && exit $?
         fi
@@ -24,14 +24,16 @@ boot2docker_init () {
     fi
 }
 
+# Input variables:
+#     - $vm_name
 docker_check_state_dir () {
     mkdir -p ~/.travis-run
 
-    if [ ! -d ".travis-run/$VM_NAME" ]; then
-	error "travis-run: Can't find state dir:">&2
-	error "    $PWD/.travis-run/$VM_NAME">&2
-	error >&2
-	error "Have you run \`travis-run create' yet?">&2
+    if [ ! -d ".travis-run/$vm_name" ]; then
+	error "travis-run: Can't find state dir:"
+	error "    $PWD/.travis-run/$vm_name"
+	error
+	error "Have you run \`travis-run create' yet?"
 	exit 1
     fi
 }
@@ -40,45 +42,110 @@ docker_exists () {
     docker inspect "$@" >/dev/null 2>&1
 }
 
+docker_tag_exists () {
+    docker images --no-trunc | awk '{ print $1 ":" $2 " " }' | grep -q "^$*\$"
+}
+
+
+# Input variables:
+#    - $opt_no_pull
 docker_pull () {
-    if [ "$OPT_NO_PULL" ];  then
-	return 1
+    if [ "$opt_no_pull" ];  then
+	exit 1
     fi
 
-    docker pull "$@"
-    RV=$?
+    do_done "docker: trying to pull image $1" \
+        docker pull "$@" >/dev/null 2>&1
+    local rv=$?
+
     echo "$@" >> ~/.travis-run/images
-    return $RV
+
+    return $rv
+}
+
+# Usage: docker_build STAGE [COMMANDS...]
+#
+# Arguments:
+#
+#     - STAGE: this will be used to form the container tag using the template
+#     - `$vm_repo:STAGE_$VERSION`
+#
+# Input variables:
+#
+#     - $VERSION
+#     - $opt_stage
+#     - $vm_repo
+#     - $tmpdir: directory where `docker build` will be executed if a file
+#       called `Dockerfile` exists in this directory it will be overwritten
+#       unconditionally
+#
+# For examples see docker_create()
+docker_build () {
+    local stage_id="$1"; shift
+
+    if [ x"$stage_id" = x"language" ]; then
+        local stage="$1"; shift
+    else
+        local stage="$stage_id"
+    fi
+
+    feval "$@"
+
+    local files="$(find "$tmpdir" -type f)"
+    local sha=$(sha1sum $files | awk '{ print $1 }' | sort | sha1sum | head -c10)
+
+    local stage_tag="${vm_repo}:${stage}_$VERSION-${sha}"
+
+    debug "docker_build: $stage_tag"
+
+    while true; do
+        if ! [ -z "$opt_stage" -o x"$opt_stage" = x"$stage_id" ]; then
+            break
+        fi
+
+        if docker_tag_exists "$stage_tag"; then
+            break
+        elif ! docker_pull "$stage_tag"; then
+	    docker build -t "$stage_tag" "$tmpdir" >&2 || return 1
+
+            info "Built $stage_tag"
+
+	    echo "$stage_tag" >> ~/.travis-run/images
+        fi
+
+        break
+    done
+
+    echo "$stage_tag"
 }
 
 docker_create () {
     boot2docker_init
 
-    local OPTS LANGUAGE OPT_DISTRIBUTION OPT_FROM OPT_STAGE
+    local opts="$($GETOPT -o "" --long docker-base-image:,docker-build-stage:,docker-no-pull -n "$(basename "$0")" -- "$@")"
+    eval set -- "$opts"
 
-    OPTS=$($GETOPT -o "" --long docker-base-image:,docker-build-stage:,docker-no-pull -n "$(basename "$0")" -- "$@")
-    eval set -- "$OPTS"
+    local opt_from opt_stage opt_no_pull
 
     while true; do
 	case "$1" in
-            --docker-base-image)  OPT_FROM=$2;     shift; shift ;;
-            --docker-build-stage) OPT_STAGE=$2;    shift; shift ;;
-	    --docker-no-pull)     OPT_NO_PULL=1;   shift ;;
+            --docker-base-image)  opt_from=$2;     shift; shift ;;
+            --docker-build-stage) opt_stage=$2;    shift; shift ;;
+	    --docker-no-pull)     opt_no_pull=1;   shift ;;
 
             --) shift; break ;;
             *) error "Error parsing argument: $1">&2; exit 1 ;;
 	esac
     done
 
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
 
-    OPT_LANGUAGE=$1; shift
-    OPT_FROM=${OPT_FROM:-ubuntu:precise}
-    OPT_SCRIPT_FROM=${OPT_SCRIPT_FROM:-debian:wheezy}
+    local opt_language="$1"; shift
+    local opt_from="${opt_from:-ubuntu:precise}"
+    local opt_script_from="${opt_script_from:-debian:wheezy}"
 
-    if [ ! "$OPT_LANGUAGE" ]; then
+    if [ ! "$opt_language" ]; then
 	error "Usage: docker_create VM_NAME LANGUAGE [DOCKER_OPTIONS..]">&2
 	exit 1
     fi
@@ -86,102 +153,107 @@ docker_create () {
     tmpdir=$(mktemp -p "${TMPDIR:-/tmp/}" -d travis-run-XXXX) || exit 1
     trap 'rm -rf '"$tmpdir" 0
 
-    cp -p  "$SHARE_DIR"/vm/*   "$tmpdir"
-    cp -rp "$SHARE_DIR"/script "$tmpdir"
-    cp -p  "$SHARE_DIR"/keys/* "$tmpdir"
+    cp -rp "$SHARE_DIR"/vm/*     "$tmpdir"
+    cp -rp "$SHARE_DIR"/script   "$tmpdir"
+    cp -p  "$SHARE_DIR"/keys/*   "$tmpdir"
+    cp -p  "$SHARE_DIR"/docker/* "$tmpdir"
 
-    local script_tag="$VM_REPO:script_$VERSION"
-    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"script" ] \
-        && ! docker_pull "$script_tag"
-    then
-	info "Creating build-script image">&2
+    local script_tag os_tag base_tag language_tag
 
-        sed "s|\$FROM|${OPT_SCRIPT_FROM}"'|' \
-	    < "$SHARE_DIR/docker/Dockerfile.script" \
-	    > "$tmpdir"/Dockerfile
+    script_tag=$(docker_build "script" \
+	info "Creating build-script image" \;\
+	sed "s|%FROM%|${opt_script_from}|" \
+           \< "$SHARE_DIR/docker/Dockerfile.script" \
+	   \> "$tmpdir"/Dockerfile \;\
+        )
+    echo "$script_tag" > ".travis-run/$vm_name/docker-script-img"
 
-	docker build -t "$script_tag" "$tmpdir" || exit 1
+    [ $? -eq 0 ] || return 1
+    os_tag=$(docker_build "os" \
+        info "Creating os image" \;\
+        sed "s|%FROM%|${opt_from}|" \
+	   \< "$SHARE_DIR/docker/Dockerfile.os" \
+	   \> "$tmpdir"/Dockerfile \;\
+        )
 
-	echo "$script_tag" >> ~/.travis-run/images
-    fi
+    [ $? -eq 0 ] || return 1
+    base_tag=$(docker_build "base" \
+	info "Creating base image" \;\
+        sed "s|%FROM%|$os_tag|" \
+           \< "$SHARE_DIR/docker/Dockerfile.base" \
+           \> "$tmpdir"/Dockerfile \;\
+        )
 
-    local base_tag="$VM_REPO:base_$VERSION"
-    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"base" ] \
-        && ! docker_pull "$base_tag"
-    then
-	info "Creating base image">&2
+    [ $? -eq 0 ] || return 1
+    language_tag=$(docker_build language "$opt_language" \
+	info "Creating language image" \;\
+	sed -e "s|%FROM%|$base_tag"'|' \
+            -e "s|\%LANGUAGE%|$opt_language|" \
+           \< "$SHARE_DIR/docker/Dockerfile.language" \
+	   \> "$tmpdir"/Dockerfile \;\
+        )
 
-        sed "s/\$OPT_FROM/$OPT_FROM"'/' \
-	    < "$SHARE_DIR/docker/Dockerfile.base" \
-	    > "$tmpdir"/Dockerfile
-
-	docker build -t "$base_tag" "$tmpdir" || exit 1
-
-	echo "$base_tag" >> ~/.travis-run/images
-    fi
-
-    local language_tag="$VM_REPO:${OPT_LANGUAGE}_$VERSION"
-    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"language" ] \
-        && ! docker_pull "$language_tag"
-    then
-	info "Creating language image"
-
-	sed -e "s|\$FROM|$base_tag"'|' \
-            -e "s/\$OPT_LANGUAGE/$OPT_LANGUAGE"'/' \
-	    < "$SHARE_DIR/docker/Dockerfile.language" \
-	    > "$tmpdir"/Dockerfile
-
-	docker build -t "$language_tag" "$tmpdir" || exit 1
-
-	echo "$language_tag" >> ~/.travis-run/images
-    fi
-
-    if [ -z "$OPT_STAGE" -o x"$OPT_STAGE" = x"project" ]; then
+    if [ -z "$opt_stage" -o x"$opt_stage" = x"project" ]; then
+        info
 	info "Creating per-project image"
+        info
 
-	mkdir -p ".travis-run/$VM_NAME"
+	mkdir -p ".travis-run/$vm_name"
 
-	if [ ! -e ".travis-run/$VM_NAME/Dockerfile" ]; then
-	    sed "s|\$FROM|$language_tag|" \
+	if [ ! -e ".travis-run/$vm_name/Dockerfile" ] \
+            || ! grep -q $language_tag < ".travis-run/$vm_name/"Dockerfile
+        then
+	    sed "s|%FROM%|$language_tag|" \
 		< "$SHARE_DIR/docker/Dockerfile.project" \
-		> ".travis-run/$VM_NAME"/Dockerfile
+		> ".travis-run/$vm_name"/Dockerfile
 	fi
 
-        fifo ".travis-run/build-stdout"
+        fifo ".travis-run/.build-stdout"
 
-        docker build ".travis-run/$VM_NAME" 2>/dev/null \
-            > ".travis-run/build-stdout" &
+        # Running in background so we can get the exit code
+        docker build ".travis-run/$vm_name" \
+            > ".travis-run/.build-stdout" &
         local build_pid=$!
 
-	DOCKER_ID=$(cat ".travis-run/build-stdout" \
+	local docker_id="$(cat ".travis-run/.build-stdout" \
 	    | grep 'Successfully built' \
-	    | awk '{ print $3 }')
+	    | awk '{ print $3 }' \
+            | trim)"
 
         wait $build_pid
-        if [ $? -ne 0 ]; then
-            rm -f .travis-run/build-stdout
-            exit $?
+        local rv=$?
+
+        rm -f .travis-run/build-stdout
+
+        if [ $rv -ne 0 ]; then
+            return $rv
         fi
 
-	echo "$DOCKER_ID" > ".travis-run/$VM_NAME/docker-image-id"
-	echo "$DOCKER_ID" >> ~/.travis-run/images
-        rm -f .travis-run/build-stdout
+        if [ -z "$docker_id" ]; then
+            error "\
+travis-run: Error while building project container. Could not get resulting
+container id, did `docker build`'s output format change?"
+            exit 1
+        fi
+
+	echo "$docker_id" > ".travis-run/$vm_name/docker-project-img"
+	echo "$docker_id" >> ~/.travis-run/images
     fi
 }
 
 docker_destroy () {
     docker_clean "$@"
 
-    local images
-    images=$(sort < ~/.travis-run/images | uniq)
+    local images="$(sort < ~/.travis-run/images | uniq)"
 
     for img in $(printf '%s' "$images"); do
 	if docker_exists "$img"; then
 	    docker rmi $img
 
 	    if [ $? -ne 0 ]; then
-		local offender
-		offender=$(docker ps -a | grep "$img" | awk '{ print $1 }')
+		local offender="$(docker ps -a \
+                    | grep "$img" \
+                    | awk '{ print $1 }')"
 
 		if [ -n "$offender" ]; then
 		    error "\
@@ -206,58 +278,84 @@ to destroy the offending container."
 }
 
 docker_clean () {
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
 
-    if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
-	docker_end "$VM_REPO"
+    if [ -f ".travis-run/$vm_name/docker-container-id" ]; then
+	docker_end "$vm_repo"
     fi
 
-    if [ -f ".travis-run/$VM_NAME/docker-image-id" ]; then
-    	docker rmi "$(cat ".travis-run/$VM_NAME/docker-image-id")"
-	rm -f ".travis-run/$VM_NAME/docker-image-id"
+    if [ -f ".travis-run/$vm_name/docker-project-img" ]; then
+    	docker rmi "$(tca ".travis-run/$vm_name/docker-project-img")"
+	rm -f ".travis-run/$vm_name/docker-project-img"
     fi
 }
 
-docker_init () {
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
-
-    local DOCKER_CONTAINER_NAME
-    DOCKER_CONTAINER_NAME="travis-run_$(printf '%s' "$PWD" | sed 's|/|-|g')"
+docker_vm_exists () {
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
 
     docker_check_state_dir
 
+    [ -f ".travis-run/$vm_name/docker-project-img" ]
+}
+
+docker_init () {
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
+
+    local docker_container_name="travis-run_$(printf '%s' "$PWD" |sed 's|/|-|g')"
+    local docker_img_id="$(err2null tca ".travis-run/$vm_name/docker-project-img")"
+
     boot2docker_init || exit $?
 
-    local DOCKER_IMG_ID=$(cat ".travis-run/$VM_NAME/docker-image-id")
+    docker_check_state_dir
+
+    if [ -n "$docker_img_id" ] && ! docker_exists "$docker_img_id"; then
+        debug "docker: stale docker-project-img, removing"
+        rm ".travis-run/$vm_name/docker-project-img"
+
+        error "\
+travis-run: The docker image ($docker_img_id) referenced in:\n\
+	$PWD/.travis-run/$vm_name/docker-project-img\n\
+could not be found.\n\
+\n\
+Please re-run \`travis-run create'.\n\
+"
+        exit 1
+    fi
+
+    if [ ! -f ".travis-run/$vm_name/docker-project-img" ]; then
+	error "travis-run: Can't get docker image id."
+	error
+	error "Have you run \`travis-run create' yet?"
+	exit 1
+    fi
 
     while true; do
-	if [ -f ".travis-run/$VM_NAME/docker-container-id" ]; then
+	if [ -f ".travis-run/$vm_name/docker-container-id" ]; then
 	    debug "docker: try running container"
-	    local DOCKER_CONTAINER_ID
-            DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
+	    local docker_container_id
+            docker_container_id=$(tca ".travis-run/$vm_name/docker-container-id")
 
 	    local inspect running
-	    inspect=$(docker inspect "$DOCKER_CONTAINER_ID")
+	    inspect="$(docker inspect $docker_container_id)"
 	    if [ $? -eq 0 ]; then
 		running="$(printf '%s' "$inspect" \
                       | grep '"Running":[[:space:]]true')"
 
 		if [ "$running" ]; then
-		    info "docker: Using running container $DOCKER_CONTAINER_ID"
+		    info "docker: Using running container $docker_container_id"
 		    break
 		else
 		    do_done "docker: Starting existing container" \
-			docker start "$DOCKER_CONTAINER_ID" >/dev/null
+			docker start "$docker_container_id" >/dev/null
 		    break
 		fi
 	    fi
 
 	    debug "docker: nope, remove stale docker-container-id file"
-	    rm ".travis-run/$VM_NAME/docker-container-id"
+	    rm ".travis-run/$vm_name/docker-container-id"
 	    continue
 	else
 	    local listen
@@ -267,19 +365,19 @@ docker_init () {
 		listen=""
 	    fi
 
-	    do_done "docker: Starting container from image $DOCKER_IMG_ID" \
-		'DOCKER_CONTAINER_ID=$(docker run -d -p ${listen}22 \
-                               --name="$DOCKER_CONTAINER_NAME" "$DOCKER_IMG_ID")'
+	    do_done "docker: Starting container from image $docker_img_id" \
+		'docker_container_id=$(docker run -d -p ${listen}22 \
+                               --name="$docker_container_name" "$docker_img_id")'
 
-	    echo "$DOCKER_CONTAINER_ID" \
-                > ".travis-run/$VM_NAME/docker-container-id"
+	    echo "$docker_container_id" \
+                > ".travis-run/$vm_name/docker-container-id"
 
 	    break
 	fi
     done
 
     local addr ip port
-    addr=$(docker port "$DOCKER_CONTAINER_ID" 22)
+    addr="$(docker port "$docker_container_id" 22)"
     if [ $? -ne 0 ]; then
 	error "docker: getting port failed."
 	exit 1
@@ -303,66 +401,74 @@ docker_init () {
 	chmod 600 ~/.travis-run/travis-run_id_rsa
     fi
 
-    DOCKER_SSH="env LANGUAGE= LC_ALL= LC_CTYPE= LANG=C.UTF-8 ssh -q -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ControlMaster=no -i $HOME/.travis-run/travis-run_id_rsa -p $port travis@$ip"
+    local ssh_verbosity
+    if [ "$TRAVIS_RUN_DEBUG" ]; then
+        ssh_verbosity="-v"
+    else
+        ssh_verbosity="-q"
+    fi
+
+    # global on purpose, used by docker_run
+    DOCKER_SSH="env LANGUAGE= LC_ALL= LC_CTYPE= LANG=C.UTF-8 ssh $ssh_verbosity -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ControlMaster=no -i $HOME/.travis-run/travis-run_id_rsa -p $port travis@$ip"
+
 
     do_done "docker: Waiting for ssh to come up (this takes a while)" \
 	retry 3 $DOCKER_SSH -Tn -- echo hai >/dev/null
 }
 
 docker_end () {
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
 
-    [ ! -f ".travis-run/$VM_NAME/docker-container-id" ] && return
+    [ ! -f ".travis-run/$vm_name/docker-container-id" ] && return
 
-    local DOCKER_CONTAINER_ID
-    DOCKER_CONTAINER_ID=$(cat ".travis-run/$VM_NAME/docker-container-id")
+    local docker_container_id="$(tca ".travis-run/$vm_name/docker-container-id")"
 
-    docker stop -t 0 "$DOCKER_CONTAINER_ID" >/dev/null || true
+    docker stop -t 0 "$docker_container_id" >/dev/null || true
 
-    do_done "docker: Removing container $DOCKER_CONTAINER_ID" \
-	docker rm "$DOCKER_CONTAINER_ID" >/dev/null || true
+    do_done "docker: Removing container $docker_container_id" \
+	docker rm "$docker_container_id" >/dev/null || true
 
-    rm -f ".travis-run/$VM_NAME/docker-container-id"
+    rm -f ".travis-run/$vm_name/docker-container-id"
 }
 
 ## Usage: docker_run_script VM_NAME [OPTIONS..]
 docker_run_script () {
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
 
     boot2docker_init || exit $?
 
     docker_check_state_dir
 
+    #"$vm_repo:script_$VERSION"
+    local tag="$(cat .travis-run/$vm_name/docker-script-img)"
+
+    if ! docker_tag_exists $tag; then
+        error "\
+travis-run: The docker image ($vm_repo:script_$VERSION) could not be found.\n\
+\n\
+Please re-run \`travis-run create'.\
+" >&2
+        exit 1
+    fi
+
     do_done "docker: Generating build script" \
-	docker run --rm -i "$VM_REPO:script_$VERSION" "$@"
+	docker run --rm -i "$tag" "$@"
 }
 
 ## Usage: docker_run VM_NAME COPY? [OPTIONS..] -- COMMAND
 docker_run () {
-    local OPTS CPY
-
-    OPTS=$($GETOPT -o "" -n "$(basename "$0")" -- "$@")
-    eval set -- "$OPTS"
+    local opts="$($GETOPT -o "" -n "$(basename "$0")" -- "$@")"
+    eval set -- "$opts"
 
     while [ x"$1" != x"--" ]; do shift; done; shift
 
-    local VM_NAME VM_REPO
-    VM_REPO="$1"; shift
-    VM_NAME="$(basename "$VM_REPO")"
-    CPY=$1; shift
+    local vm_repo="$1"; shift
+    local vm_name="$(basename "$vm_repo")"
+    local cpy="$1"; shift
 
     docker_check_state_dir
-
-    if [ ! -f ".travis-run/$VM_NAME/docker-image-id" ]; then
-	error "travis-run: Can't get docker image id.">&2
-	error >&2
-	error "Have you run \`travis-run create' yet?">&2
-	exit 1
-    fi
 
     if [ x"$CPY" = x"copy" ]; then
 	$DOCKER_SSH -nT -- "rm -rf 'build/' && mkdir -p build/"

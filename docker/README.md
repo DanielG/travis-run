@@ -1,6 +1,10 @@
 Dockerfiles for the "docker" backend
 ====================================
 
+- Dockerfile.os
+
+  Tweaks Ubuntu base image so running `/sbin/init` in the container works.
+
 - Dockerfile.base
 
   To build the base image `vm/base-install.sh` and `vm/base-configure.sh` will

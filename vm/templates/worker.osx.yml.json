@@ -1,0 +1,20 @@
+{
+  "travis_build_environment": {
+    "home": "/Users/travis",
+    "group": "staff",
+    "use_tmpfs_for_builds": false
+  },
+  "rvm": {
+    "default": "1.9.3",
+    "gems": [
+      "bundler",
+      "rake",
+      "cocoapods"
+    ],
+    "rubies": [
+      {
+        "name": "1.9.3"
+      }
+    ]
+  }
+}

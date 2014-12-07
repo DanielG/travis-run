@@ -64,7 +64,7 @@ run_tests () {
 
     local script
     script=$(printf '%s\n' "$cfg" \
-	| backend_run_script "$OPT_VM_NAME" --build 2>/dev/null)
+	| err2null backend_run_script "$OPT_VM_NAME" --build)
 
     RV=$?
 
@@ -91,6 +91,7 @@ EOF
 )
 
     #remove definition of travis_terminate
+    local script
     script=$(printf '%s\n' "$script" \
         | sed '/travis_terminate() {/,/}/d' \
         | sed '/^#!/d' \
@@ -99,17 +100,17 @@ EOF
     script="${travis_terminate} ${script}"
 
     mkdir -p ".travis-run"
-    fifo .travis-run/run_fifo
+    fifo .travis-run/.run-fifo
 
     printf '%s' "$script" | backend_run "$OPT_VM_NAME" copy -- bash \
-	> .travis-run/run_fifo 2>&1 &
+	> .travis-run/.run-fifo 2>&1 &
 
     BUILD_PID=$!
 
     # 1) the build script doesn't terminate it's ANSI colors
     # 2) remove lone CR's (they use them for folding metadata)
     perl -pe '$|=1; s/(\x1b\[[^m]+.*)/\1\x1b[0m/g; s/\r/\n/g' \
-	< .travis-run/run_fifo 1>&2 &
+	< .travis-run/.run-fifo 1>&2 &
 
     wait $!
     wait $BUILD_PID
@@ -124,17 +125,26 @@ EOF
 
 	    backend_run "$OPT_VM_NAME" nocopy
 
-            rm -f ".travis-run/run_fifo"
+            rm -f ".travis-run/.run-fifo"
 	    return 1
         fi
 
         info "Build Succeeded :)\n\n\n" >&2
     else
         debug "Build cancelled :(\n\n\n"
-        rm -f ".travis-run/run_fifo"
+        rm -f ".travis-run/.run-fifo"
         return 1
     fi
 }
+##################################################
+
+
+if ! backend_vm_exists "$OPT_VM_NAME"; then
+    error "travis-run: Build VM \`$OPT_VM_NAME' doesn't exists."
+    error
+    error "Please run \`travis-run create' to create one."
+    exit 1
+fi
 
 if [ $OPT_SHELL ]; then
     init

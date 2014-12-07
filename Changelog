@@ -1,3 +1,12 @@
+Changes in 0.3:
+	- Introduce os image under base, handles making upstart work for docker
+	- Bump travis-build dependency
+	- Add support for ALL of travis-ci's worker configurations and
+	  extend the base image to include all their shwazang.
+
+Changes in 0.2.3:
+	- Fix travis build script messing with resolv.conf
+
 Changes in 0.2.2:
 	- Use YAML::Tiny perl module instead of YAML
 	- Create ~/.travis-run before using it.

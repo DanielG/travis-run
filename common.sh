@@ -44,38 +44,71 @@ strip_home () {
     echo "$1" | sed "s|$home||"
 }
 
-head () {
+lhead () {
     awk '{ print $1 }'
 }
 
-tail () {
+ltail () {
     sed -r 's/^[^[:space:]]+[[:space:]]*//'
+}
+
+trim () {
+    sed -e 's/^ *//' -e 's/ *$//'
+}
+
+tca () {
+    cat "$@" | trim
+}
+
+err2null () {
+    if [ "$TRAVIS_RUN_DEBUG" ]; then
+        eval "$@"
+    else
+        eval "$@" 2>/dev/null
+    fi
 }
 
 info () {
     if [ "$QUIET" -lt 2 ]; then
-	echo "$@" >&2
+	printf "$*\n" >&2
     fi
 }
 
 debug () {
     if [ "$TRAVIS_RUN_DEBUG" ]; then
-	printf '%s\n' "$*" >&2
+	printf "$*\n" >&2
     fi
 }
 
 error () {
-    echo "$@" >&2
+    printf "$*\n" >&2
+}
+
+feval () {
+    local acc=""
+
+    for t in "$@"; do
+        case "$t" in
+            ">"|"<"|";")
+                acc="$acc $t" ;;
+            *)
+                acc="$acc \"$t\""
+        esac
+    done
+
+    eval "$acc"
 }
 
 do_done () {
     [ "$QUIET" -lt 2 ] && printf "$1..." >&2 ; shift
     eval "$@"
-    if [ $? -ne 0 ]; then
+    local rv=$?
+    if [ $rv -ne 0 ]; then
 	[ "$QUIET" -lt 2 ] && echo "failed!" >&2
-	exit 1
+	return $rv
     else
 	[ "$QUIET" -lt 2 ] && echo "done" >&2
+        return 0
     fi
 }
 
@@ -148,6 +181,13 @@ backend_end () {
     "${OPT_BACKEND}"_end "$@" "$BACKEND_ARGS"
 }
 
+##
+# Check if a VM exists
+#
+# Usage: backend_vm_exists VM_NAME
+backend_vm_exists () {
+    "${OPT_BACKEND}"_vm_exists "$@" "$BACKEND_ARGS"
+}
 
 ##
 # Create a new VM image and configuration

@@ -12,10 +12,12 @@ if which docker.io >/dev/null; then
     alias docker=docker.io
 fi
 
+os=$(docker images | grep os_$1 | awk '{ print $3 }')
 base=$(docker images | grep base_$1 | awk '{ print $3 }')
 script=$(docker images | grep script_$1 | awk '{ print $3 }')
 haskell=$(docker images | grep haskell_$1 | awk '{ print $3 }')
 
+docker tag $os       dxld/travis-run:os_$2
 docker tag $base     dxld/travis-run:base_$2
 docker tag $script   dxld/travis-run:script_$2
 docker tag $haskell  dxld/travis-run:haskell_$2

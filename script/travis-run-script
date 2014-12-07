@@ -24,6 +24,7 @@ Travis.logger = Logger.new(StringIO.new)
 
 require 'travis'
 require 'travis/build'
+require 'travis/build/script'
 require 'travis/model/build/config'
 require 'travis/testing/factories'
 require 'yaml'
@@ -113,16 +114,15 @@ def script(config)
     :job => {
       :branch => "master"
     },
-    :config => YAML.load(config.gsub("\\n", "\n"))
+    :config => YAML.load(config.untaint.gsub("\\n", "\n"))
   }
+
+  s = Travis::Build::Stages::STAGES[1]
+  s.delete_at(s.index(:checkout))
 
   Travis::Build.script(build).compile
 end
 
-# I feel dirty writing this but I don't want the resulting script to do a
-# checkout as we copy the directory into the vm ourselfs
-s = Travis::Build::Script::STAGES[:builtin]
-s.delete_at(s.index(:checkout))
 
 if ARGV.length == 0 then
   puts configs($stdin.read)

@@ -2,8 +2,4 @@
 #
 # Remove this file and re-run `travis-run create' to return to defaults or when
 # you changed the `language' key in your `.travis.yml'
-FROM $FROM
-
-WORKDIR /root
-CMD /usr/sbin/sshd -D
-EXPOSE 22
+FROM %FROM%

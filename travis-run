@@ -43,9 +43,13 @@ usage () {
 		\`travis-run stop' after you're done with the VM.\n\
 \n\
 	-n, --vm-name=VM_NAME\n\
-		Backend specific identifier associated with the VM. For the\n\
-		docker backend this is the repository name for the images to\n\
-		use. (defaults to \`dxld/travis-run' for docker backend)
+		Backend specific identifier associated with the VM.
+		- docker:
+		    For the docker backend this shoulb be in the form
+		    \`REPOSITORY/IMAGE'.
+		    This will be used to pull prebuilt container images as well
+		    as to tag built container images when prebuilts are not
+		    found. (defaults to \`dxld/travis-run')\n\
 \n\
 \n\
 " "$(echo -n "$BACKENDS" | awk -v RS=" " '{ if($0) print "\t\t- " $0 }')"
@@ -79,7 +83,7 @@ create:\n\
 			\`FROM' Dockerfile command.  (defaults to:\n\
 			ubuntu:presice)\n\
 		--docker-build-stage=STAGE\n\
-			Stage of the image build to run, (one of: base,\n\
+			Stage of the image build to run, (one of: os, base,\n\
 			script, language, project)\n\
 		--docker-no-pull\n\
 			Build all docker containers from scratch, don't try to\n\

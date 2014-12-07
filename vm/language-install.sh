@@ -25,26 +25,30 @@ fi
 # Use https://github.com/travis-ci/travis-images/tree/master/templates as a
 # reference for runlists for other languages.
 
-printf '{
+
+
+RUNLIST=$(cat worker.$LANGUAGE.yml.runlist)
+
+JSON=worker.$LANGUAGE.yml.json
+
+cat > tbe.json <<EOF
+{
     "travis_build_environment": {
-        "user": "'"$USER_"'",
-        "group": "'"$USER_"'",
-        "home": "/home/'"$USER_"'/"
-    }' > travis.json
+        "user": "$USER_",
+        "group": "$USER_",
+        "home": "/home/$USER_/",
+        "use_tmpfs_for_builds": "false"
+    }
+}
+EOF
+if [ -e $JSON ]; then
+    jq -s '.[0] * .[1]' $FILE - < worker.go.yml.json > travis.json
+else
+    cp tbe.json travis.json
+fi
 
-case "$LANGUAGE" in
-    haskell) RUNLIST="-o haskell::multi,sweeper" ;;
-    php) RUNLIST="-o php::multi,composer,sweeper"
-         apt-get install m4
-        ;;
-    *)
-        echo; echo; echo
-	echo "Warning: Untested language: $LANGUAGE"
-        echo; echo; echo
-	RUNLIST="$LANGUAGE"
-	;;
-esac
+echo >&2
+echo travis.json: >&2
+cat travis.json >&2
 
-printf '}' >> travis.json
-
-chef-solo --node-name $(hostname) -j travis.json $RUNLIST
+chef-solo --node-name $(hostname) -j travis.json -o "$RUNLIST"
