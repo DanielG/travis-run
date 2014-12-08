@@ -164,7 +164,7 @@ done
 #
 # Usage: backend_init VM_NAME
 backend_init () {
-    "${OPT_BACKEND}"_init "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_init "$@" $BACKEND_ARGS
 }
 
 ##
@@ -178,7 +178,7 @@ backend_init () {
 #
 # Usage: backend_end VM_NAME
 backend_end () {
-    "${OPT_BACKEND}"_end "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_end "$@" $BACKEND_ARGS
 }
 
 ##
@@ -186,7 +186,7 @@ backend_end () {
 #
 # Usage: backend_vm_exists VM_NAME
 backend_vm_exists () {
-    "${OPT_BACKEND}"_vm_exists "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_vm_exists "$@" $BACKEND_ARGS
 }
 
 ##
@@ -194,7 +194,7 @@ backend_vm_exists () {
 #
 # Usage: backend_create VM_NAME LANGUAGE
 backend_create () {
-    "${OPT_BACKEND}"_create "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_create "$@" $BACKEND_ARGS
 }
 
 ##
@@ -202,7 +202,7 @@ backend_create () {
 #
 # Usage: backend_clean VM_NAME
 backend_clean () {
-    "${OPT_BACKEND}"_clean "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_clean "$@" $BACKEND_ARGS
 }
 
 ##
@@ -210,7 +210,7 @@ backend_clean () {
 #
 # Usage: backend_destroy VM_NAME
 backend_destroy () {
-    "${OPT_BACKEND}"_destroy "$@" "$BACKEND_ARGS"
+    "${OPT_BACKEND}"_destroy "$@" $BACKEND_ARGS
 }
 
 ##
