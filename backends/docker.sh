@@ -52,7 +52,7 @@ docker_tag_exists () {
 #    - $opt_no_pull
 docker_pull () {
     if [ "$opt_no_pull" ];  then
-	exit 1
+	return 1
     fi
 
     do_done "docker: trying to pull image $1" \
@@ -82,25 +82,29 @@ docker_pull () {
 #
 # For examples see docker_create()
 docker_build () {
-    local stage_id="$1"; shift
+    local stage_id=$1; shift
 
     if [ x"$stage_id" = x"language" ]; then
-        local stage="$1"; shift
+        local stage=$1; shift
     else
-        local stage="$stage_id"
+        local stage=$stage_id
     fi
 
     feval "$@"
 
-    local files="$(find "$tmpdir" -type f)"
-    local sha=$(sha1sum $files | awk '{ print $1 }' | sort | sha1sum | head -c10)
+    local sha
+    sha=$(sha1sum $(find "$tmpdir" -type f) \
+        | awk '{ print $1 }' \
+        | sort \
+        | sha1sum \
+        | head -c10)
 
     local stage_tag="${vm_repo}:${stage}_$VERSION-${sha}"
 
     debug "docker_build: $stage_tag"
 
     while true; do
-        if ! [ -z "$opt_stage" -o x"$opt_stage" = x"$stage_id" ]; then
+        if [ -n "$opt_stage" -a x"$opt_stage" != x"$stage_id" ]; then
             break
         fi
 
