@@ -2,11 +2,6 @@
 
 cd "$(dirname "$0")"
 
-if [ ! "$1" ]; then
-    echo "Usage: install.sh">&2
-    exit 1
-fi
-
 VERSION="$(sed 's/Changes in \(.*\):/\1/g' < Changelog | head -n1)"
 PREFIX=${PREFIX:-"/usr"}
 BIN_DIR=${BIN_DIR:-"$PREFIX/bin"}
