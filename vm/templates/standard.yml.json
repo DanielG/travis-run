@@ -1,15 +1,18 @@
 {
+  "gimme": {
+    "default_version": "1.4.1",
+    "versions": [
+      "1.4.1"
+    ]
+  },
   "travis_build_environment": {
-    "home": "/Users/travis",
-    "group": "staff",
     "use_tmpfs_for_builds": false
   },
   "rvm": {
     "default": "1.9.3",
     "gems": [
       "bundler",
-      "rake",
-      "cocoapods"
+      "rake"
     ],
     "rubies": [
       {

@@ -1,26 +1,22 @@
 cd "$(dirname "$0")"
 
-git clone https://github.com/travis-ci/travis-images.git || true
+git clone https://github.com/travis-ci/travis-cookbooks.git || true
 
-cd travis-images/templates
+cd travis-cookbooks/vm_templates/common
 
-rm -rf ../../vm/templates
-mkdir ../../vm/templates
+rm ../../../vm/templates/*
 
-echo '{ "dummy": "",' > travis.json
 for t in *.yml; do
     python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < $t > $t.json
 
     json=$(jq -e .json < $t.json)
     if [ $? -eq 0 ]; then
-        printf '%s' "$json" > ../../vm/templates/$t.json
+        printf '%s' "$json" > ../../../vm/templates/$t.json
     fi
 
-    runlist=$(jq -e -r '.recipes | join(",")' < $t.json)
+    runlist=$(jq -e -r '.recipes - ["sysctl"] | join(",")' < $t.json)
     if [ $? -eq 0 ]; then
-        printf '%s' "$runlist" > ../../vm/templates/$t.runlist
+        printf '%s' "$runlist" > ../../../vm/templates/$t.runlist
     fi
 
 done
-
-echo '}' >> ../../vm/$t.json
