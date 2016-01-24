@@ -2,7 +2,7 @@ Source: travis-run
 Section: devel
 Priority: optional
 Maintainer: Daniel Gröber <dxld@darkboxed.org>
-Build-Depends: debhelper (>= 9.0.0)
+Build-Depends: debhelper (>= 9.0.0), help2man
 Standards-Version: 3.9.5
 Homepage: https://github.com/DanielG/travis-run
 Vcs-Git: https://github.com/DanielG/travis-run.git
